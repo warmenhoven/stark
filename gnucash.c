@@ -4,6 +4,7 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
 #endif
+#include <ansidecl.h>
 #include <expat.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -13,6 +14,7 @@
 #include "xml.h"
 
 static XML_Parser parser;
+static void *curr = NULL;
 
 list *commodities = NULL;
 list *accounts = NULL;
@@ -512,9 +514,8 @@ gnucash_process(void *top)
 }
 
 static void
-gnucash_start(void *data, const char *el, const char **attr)
+gnucash_start(void *data ATTRIBUTE_UNUSED, const char *el, const char **attr)
 {
-	void *curr = *(void **)data;
 	int i;
 
 	if (curr)
@@ -527,10 +528,9 @@ gnucash_start(void *data, const char *el, const char **attr)
 }
 
 static void
-gnucash_end(void *data, const char *el)
+gnucash_end(void *data ATTRIBUTE_UNUSED, const char *el)
 {
 	void *parent;
-	void *curr = *(void **)data;
 
 	if (!curr)
 		return;
@@ -545,9 +545,8 @@ gnucash_end(void *data, const char *el)
 }
 
 static void
-gnucash_chardata(void *data, const char *s, int len)
+gnucash_chardata(void *data ATTRIBUTE_UNUSED, const char *s, int len)
 {
-	void *curr = *(void **)data;
 	xml_data(curr, s, len);
 }
 
@@ -556,12 +555,10 @@ gnucash_init(char *filename)
 {
 	FILE *f = NULL;
 	char line[4096];
-	void *curr;
 
 	if (!(parser = XML_ParserCreate(NULL)))
 		bail("Unable to create parser\n");
 
-	XML_SetUserData(parser, &curr);
 	XML_SetElementHandler(parser, gnucash_start, gnucash_end);
 	XML_SetCharacterDataHandler(parser, gnucash_chardata);
 

@@ -13,6 +13,9 @@ NITPICKY_WARNINGS = -W \
 		    -Wsign-compare \
 		    -Waggregate-return \
 		    -Wstrict-prototypes \
+		    -Wmissing-prototypes \
+		    -Wmissing-declarations \
+		    -Wpadded \
 		    -ansi \
 		    -pedantic
 

@@ -46,11 +46,12 @@ typedef struct _acct {
 typedef struct {
 	char	*account;
 	char	*memo;
-	char	recstate;
 	time_t	recdate;
 	float	value;
 	float	quantity;
 	char	*action;
+	char	recstate;
+	char	pad[3];
 } split;
 
 typedef struct {
