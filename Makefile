@@ -138,9 +138,10 @@ test: $(TARGET)
 	$(CC) -MM $(CFLAGS) $< > $@
 
 .depend:
-	echo -e "include $(DEPS)" > $@
-	echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
-	echo -e "\t\$$(CC) \$$(LDFLAGS) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+	echo "include $(DEPS)" > $@
+	echo >> $@
+	echo "\$$(TARGET): \$$(OBJS)" >> $@
+	echo "	\$$(CC) \$$(LDFLAGS) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
 
 depend: $(DEPS) .depend
 
