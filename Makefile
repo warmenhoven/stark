@@ -54,6 +54,9 @@ NITPICKY_WARNINGS = \
 		    -pedantic \
 		    -std=c99 \
 
+ifeq "$(DEBUG)" ""
+NITPICKY_WARNINGS += -Wuninitialized
+endif
 CFLAGS += $(NITPICKY_WARNINGS)
 endif
 
@@ -89,12 +92,14 @@ $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
 
 clean:
-	rm -f $(DEPS) .depend
 	rm -f *.o $(TARGET) $(TARGET).1
-	rm -f $(TARGET).tgz
 	rm -f *.bb *.bbg *.da *.gcov
 	rm -f core gmon.out
+
+distclean: clean
+	rm -f $(DEPS) .depend
 	rm -rf tmp
+	rm -f $(TARGET).tgz
 
 dist:
 	rm -rf tmp
@@ -124,4 +129,4 @@ test: $(TARGET)
 
 depend: $(DEPS) .depend
 
-.PHONY: depend clean dist install test
+.PHONY: depend clean dist distclean install test
