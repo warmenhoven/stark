@@ -18,10 +18,9 @@
    want to with them. I remove mine after committing the changes to CVS.
 
    If it complains about anything and doesn't show you an account list, odds
-   are there's a problem with your GnuCash data. Either that or you've got
-   something I don't use like AP or AR. Hopefully there's enough information in
-   the error message for you to open your data file in an editor and track down
-   where the problem is.
+   are there's a problem with your GnuCash data. Hopefully there's enough
+   information in the error message for you to open your data file in an editor
+   and track down where the problem is.
 
    In the accounts display, these keys do these things:
 
