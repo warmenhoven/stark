@@ -963,8 +963,9 @@ detail_handle_key(int c)
 				redraw_screen();
 				break;
 			} else {
+				split *s = NULL;
 				while (splits) {
-					split *s = splits->data;
+					s = splits->data;
 					splits = splits->next;
 					if (!s->selected)
 						continue;
@@ -977,6 +978,13 @@ detail_handle_key(int c)
 				}
 				if (splits) {
 					redraw_screen();
+					break;
+				}
+				l = list_find(curr_acct->transactions, curr_trans);
+				assert(l);
+				if (!l->next) {
+					assert(s);
+					s->selected = 1;
 					break;
 				}
 			}
