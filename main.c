@@ -15,9 +15,13 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage(argv[0]);
 
+	display_init();
+
 	gnucash_init(argv[1]);
 
-	display_init();
+	display_run();
+
+	display_end();
 
 	return 0;
 }

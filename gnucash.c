@@ -24,6 +24,8 @@ bail(char *f, ...)
 {
 	va_list ap;
 
+	display_end();
+
 	va_start(ap, f);
 	vfprintf(stderr, f, ap);
 	va_end(ap);
@@ -265,7 +267,7 @@ gnucash_add_account(void *acc)
 			} else {
 				/*
 				printf("Unable to find commodity %s/%s, will assume USD\n",
-					   xml_get_data(sp), xml_get_data(id));
+						xml_get_data(sp), xml_get_data(id));
 				*/
 			}
 		} else if (!strcmp(xml_name(data), "act:commodity-scu")) {
@@ -274,7 +276,6 @@ gnucash_add_account(void *acc)
 			/* why does gnucash do it this way? */
 		} else if (!strcmp(xml_name(data), "act:description")) {
 			a->description = strdup(xml_get_data(data));
-			/* XXX: we should probably keep this but for now, eh */
 		} else if (!strcmp(xml_name(data), "act:slots")) {
 			/* XXX: this will probably become necessary later */
 		} else if (!strcmp(xml_name(data), "act:parent")) {
@@ -307,7 +308,7 @@ gnucash_print_accounts(list *l, char *prefix)
 			printf(" (USD)");
 		printf(" (%u transactions)", list_length(a->transactions));
 		printf(" (%.03f %s)", a->quantity,
-			   a->commodity ? a->commodity->id : "USD");
+				a->commodity ? a->commodity->id : "USD");
 		printf("\n");
 		snprintf(newprefix, sizeof(newprefix), "%s |", prefix);
 		gnucash_print_accounts(a->subs, newprefix);

@@ -62,5 +62,7 @@ extern list *transactions;
 extern void gnucash_init(char *);
 
 extern void display_init();
+extern void display_run();
+extern void display_end();
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */
