@@ -573,6 +573,7 @@ gnucash_init(char *filename)
 			bail("unable to parse %s\n", filename);
 
 	fclose(f);
+	XML_ParserFree(parser);
 }
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */
