@@ -48,7 +48,6 @@ NITPICKY_WARNINGS = \
 		    -Wswitch-enum \
 		    -Wtrigraphs \
 		    -Wundef \
-		    -Wuninitialized \
 		    -Wunknown-pragmas \
 		    -Wunused \
 		    -Wwrite-strings \

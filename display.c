@@ -1081,10 +1081,10 @@ detail_handle_key(int c)
 	case 14:	/* ^N */
 		if (curr_trans->expanded)
 			expanded = 1;
-		unexpand_transaction();
 		l = list_find(disp_trans, curr_trans);
 		assert(l);
 		if (l->next) {
+			unexpand_transaction();
 			curr_trans->selected = 0;
 			curr_trans = l->next->data;
 			curr_trans->selected = 1;
@@ -1095,12 +1095,19 @@ detail_handle_key(int c)
 			l = list_find(curr_acct->transactions, curr_trans);
 			assert(l);
 			if (l->next) {
-				skip_trans++;
+				unexpand_transaction();
 				curr_trans->selected = 0;
 				curr_trans = l->next->data;
 				curr_trans->selected = 1;
-				if (expanded)
+				if (expanded) {
 					expand_transaction();
+					if (list_length(curr_trans->splits) >
+						list_length(((transaction *)l->data)->splits))
+						skip_trans += list_length(curr_trans->splits) -
+							list_length(((transaction *)l->data)->splits);
+				} else {
+					skip_trans++;
+				}
 				redraw_screen();
 			}
 		}
@@ -1155,7 +1162,7 @@ detail_handle_key(int c)
 				curr_trans = l->prev->data;
 				curr_trans->selected = 1;
 				if (expanded)
-					expand_transaction();
+					curr_trans->expanded = 1;
 				redraw_screen();
 			}
 		}
@@ -1182,7 +1189,7 @@ detail_handle_key(int c)
 		curr_trans->selected = 1;
 		skip_trans = 0;
 		if (expanded)
-			expand_transaction();
+			curr_trans->expanded = 1;
 		redraw_screen();
 		break;
 	case KEY_END:
@@ -1210,8 +1217,10 @@ detail_handle_key(int c)
 		}
 		unexpand_transaction();
 		init_trans();
-		if (expanded)
-			expand_transaction();
+		if (expanded) {
+			curr_trans->expanded = 1;
+			skip_trans += list_length(curr_trans->splits);
+		}
 		redraw_screen();
 		break;
 

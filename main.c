@@ -3,6 +3,7 @@
 #include "main.h"
 
 static void
+__attribute__((__noreturn__))
 usage(char *name)
 {
 	printf("Usage: %s <gnucash-data-file>\n", name);
