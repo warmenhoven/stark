@@ -1,4 +1,4 @@
-CC = gcc
+#CC = gcc
 LDLIBS = -lcurses -lexpat
 
 ifneq "$(PICKY)" ""
