@@ -115,6 +115,7 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 			break;
 		}
 	}
+	assert(grandparent);
 	if (!parent || !parent->red) {
 		grandparent->red = 0;
 		return t;

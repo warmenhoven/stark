@@ -5,6 +5,8 @@ list *
 list_new(void *data)
 {
 	list *l = malloc(sizeof(list));
+	if (!l)
+		return NULL;
 	l->prev = NULL;
 	l->next = NULL;
 	l->data = data;
