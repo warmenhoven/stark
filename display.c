@@ -1287,7 +1287,9 @@ display_run(char *filename)
 					}
 					free(transid);
 				}
-				if (curr_trans) {
+				if (!curr_trans) {
+					init_trans();
+				} else {
 					curr_trans->selected = 1;
 					recalc_skip_trans();
 				}
