@@ -36,7 +36,7 @@ tree *
 tree_insert(tree *t, void *data, tree_cmpfunc func)
 {
 	tree *s = t;
-	tree *child, *parent, *grandparent;
+	tree *child, *parent, *grandparent = NULL;
 
 	/* case 1: new node is root */
 	if (!t) {

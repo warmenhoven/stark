@@ -215,7 +215,7 @@ static int
 gnucash_acct_cmp(const void *one, const void *two)
 {
 	const account *a = one, *b = two;
-	return strcmp(a->id, b->id);
+	return memcmp(a->id, b->id, 32);
 }
 
 account *
