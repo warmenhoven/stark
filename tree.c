@@ -71,7 +71,7 @@ void
 tree_free(tree *t)
 {
 	if (!t)
-		return NULL;
+		return;
 	tree_free(t->prev);
 	tree_free(t->next);
 	free(t);
