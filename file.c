@@ -131,12 +131,9 @@ print_date(FILE *f, time_t t)
 	struct tm *stm;
 	time_t tz;
 
-	tz = t + __timezone;
-	stm = localtime(&tz);
-	tz = t + __timezone - (stm->tm_isdst ? 3600 : 0);
-	stm = localtime(&tz);
-	tz -= t;
+	stm = localtime(&t);
 	strftime(tmstr, sizeof (tmstr), "%Y-%m-%d %H:%M:%S", stm);
+	tz = __timezone - (stm->tm_isdst ? 3600 : 0);
 
 	fprintf(f, "<ts:date>%s %c%02ld%02ld</ts:date>\n", tmstr,
 			tz > 0 ? '-' : '+',

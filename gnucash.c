@@ -54,13 +54,13 @@ gnucash_get_time(void *data)
 	if (sscanf(pos, " %c%2d%2d", &sign, &h, &m) < 3)
 		return 0;
 
-	ret = mktime(&t);
+	ret = timegm(&t);
 
 	s = 60 * (60 * h + m);
 	if (sign == '-')
-		ret -= s;
-	else
 		ret += s;
+	else
+		ret -= s;
 
 	return ret;
 }
