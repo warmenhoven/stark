@@ -387,7 +387,8 @@ gnucash_add_transaction(void *trans)
 		} else if (!strcmp(xml_name(data), "trn:date-entered")) {
 			t->entered = gnucash_get_time(xml_get_child(data, "ts:date"));
 		} else if (!strcmp(xml_name(data), "trn:description")) {
-			t->description = strdup(xml_get_data(data));
+			if (xml_get_data(data))
+				t->description = strdup(xml_get_data(data));
 		} else if (!strcmp(xml_name(data), "trn:splits")) {
 			list *splits = xml_get_children(data);
 			while (splits) {
