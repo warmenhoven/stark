@@ -6,7 +6,7 @@
 2. How to compile it
 
    There is a Makefile included that should build stark without any problems.
-   stark depends on expat and curses.
+   Simply run 'make'. stark depends on expat and curses.
 
 3. How to use it
 
