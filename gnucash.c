@@ -144,7 +144,7 @@ gnucash_add_price(void *pr)
 			if (c) {
 				if (c->quote) {
 					void *tm = xml_get_child(pr, "price:time");
-					p->time = gnucash_get_time(tm);
+					p->time = gnucash_get_time(xml_get_child(tm, "ts:date"));
 					if (c->quote->time >= p->time) {
 						/* eh. silently ignore.
 						fprintf(stderr, "duplicate quote %s\n", c->id);
