@@ -50,9 +50,15 @@ typedef struct _acct {
 
 	/* stuff we don't care about (yet?), except for file */
 	int				scu;
+	int				nonstdscu;
 	char			*oldsrc;
 	int				has_placeholder;
 	int				has_notes;
+	int				tax_related;
+	unsigned long	last_reconcile;
+	int				reconcile_mon;
+	int				reconcile_day;
+	int				last_num;
 
 	/* display */
 	int				expanded;

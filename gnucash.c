@@ -243,6 +243,69 @@ find_account(char *guid)
 }
 
 static void
+get_reconcile_info(account *a, void *val)
+{
+	list *l;
+
+	if (!xml_get_attrib(val, "type") ||
+		strcmp(xml_get_attrib(val, "type"), "frame"))
+		return;
+
+	l = xml_get_children(val);
+	while (l) {
+		void *slot = l->data;
+		void *k, *v;
+		l = l->next;
+
+		if (strcmp(xml_name(slot), "slot"))
+			continue;
+
+		k = xml_get_child(slot, "slot:key");
+		v = xml_get_child(slot, "slot:value");
+
+		if (!k || !xml_get_data(k) || !v)
+			continue;
+
+		if (!strcmp(xml_get_data(k), "last-date")) {
+			if (!xml_get_data(v))
+				continue;
+			a->last_reconcile = strtoul(xml_get_data(v), NULL, 0);
+		} else if (!strcmp(xml_get_data(k), "last-interval")) {
+			list *s;
+
+			if (!xml_get_attrib(v, "type") ||
+				strcmp(xml_get_attrib(v, "type"), "frame"))
+				continue;
+
+			s = xml_get_children(v);
+			while (s) {
+				slot = s->data;
+				s = s->next;
+
+				if (strcmp(xml_name(slot), "slot"))
+					continue;
+
+				k = xml_get_child(slot, "slot:key");
+				v = xml_get_child(slot, "slot:value");
+
+				if (!k || !xml_get_data(k) || !v)
+					continue;
+
+				if (!strcmp(xml_get_data(k), "days")) {
+					if (!xml_get_data(v))
+						continue;
+					a->reconcile_day = strtol(xml_get_data(v), NULL, 0);
+				} else if (!strcmp(xml_get_data(k), "months")) {
+					if (!xml_get_data(v))
+						continue;
+					a->reconcile_mon = strtol(xml_get_data(v), NULL, 0);
+				}
+			}
+		}
+	}
+}
+
+static void
 gnucash_add_account(void *acc)
 {
 	account *a;
@@ -274,6 +337,10 @@ gnucash_add_account(void *acc)
 	data = xml_get_child(acc, "act:commodity-scu");
 	if (data && xml_get_data(data))
 		a->scu = strtol(xml_get_data(data), NULL, 0);
+
+	data = xml_get_child(acc, "act:non-standard-scu");
+	if (data)
+		a->nonstdscu = 1;
 
 	data = xml_get_child(acc, "act:parent");
 	if (data) {
@@ -324,6 +391,14 @@ gnucash_add_account(void *acc)
 				a->oldsrc = strdup(xml_get_data(val));
 			} else if (!strcmp(xml_get_data(key), "notes")) {
 				a->has_notes = 1;
+			} else if (!strcmp(xml_get_data(key), "tax-related")) {
+				a->tax_related = 1;
+			} else if (!strcmp(xml_get_data(key), "reconcile-info")) {
+				get_reconcile_info(a, val);
+			} else if (!strcmp(xml_get_data(key), "last-num")) {
+				if (!xml_get_data(val))
+					continue;
+				a->last_num = strtol(xml_get_data(val), NULL, 0);
 			}
 		}
 	}

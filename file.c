@@ -232,10 +232,23 @@ account_type_string(act_type t)
 static void
 print_slots(FILE *f, account *a)
 {
-	if (!a->oldsrc && !a->has_placeholder && !a->has_notes)
+	if (!a->oldsrc &&
+		!a->has_placeholder &&
+		!a->has_notes &&
+		!a->tax_related &&
+		!a->last_reconcile &&
+		!a->last_num)
 		return;
 
 	fprintf(f, "  <act:slots>\n");
+
+	if (a->last_num) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>last-num</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"string\">%d</slot:value>\n",
+				a->last_num);
+		fprintf(f, "    </slot>\n");
+	}
 
 	if (a->oldsrc) {
 		fprintf(f, "    <slot>\n");
@@ -257,6 +270,43 @@ print_slots(FILE *f, account *a)
 		fprintf(f, "    <slot>\n");
 		fprintf(f, "      <slot:key>notes</slot:key>\n");
 		fprintf(f, "      <slot:value type=\"string\"></slot:value>\n");
+		fprintf(f, "    </slot>\n");
+	}
+
+	if (a->tax_related) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>tax-related</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"integer\">1</slot:value>\n");
+		fprintf(f, "    </slot>\n");
+	}
+
+	if (a->last_reconcile) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>reconcile-info</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"frame\">\n");
+		fprintf(f, "        <slot>\n");
+		fprintf(f, "          <slot:key>last-date</slot:key>\n");
+		fprintf(f, "          <slot:value type=\"integer\">%lu</slot:value>\n",
+				a->last_reconcile);
+		fprintf(f, "        </slot>\n");
+		if (a->reconcile_mon || a->reconcile_day) {
+			fprintf(f, "        <slot>\n");
+			fprintf(f, "          <slot:key>last-interval</slot:key>\n");
+			fprintf(f, "          <slot:value type=\"frame\">\n");
+			fprintf(f, "            <slot>\n");
+			fprintf(f, "              <slot:key>days</slot:key>\n");
+			fprintf(f, "              <slot:value type=\"integer\">"
+					   "%d</slot:value>\n", a->reconcile_day);
+			fprintf(f, "            </slot>\n");
+			fprintf(f, "            <slot>\n");
+			fprintf(f, "              <slot:key>months</slot:key>\n");
+			fprintf(f, "              <slot:value type=\"integer\">"
+					   "%d</slot:value>\n", a->reconcile_mon);
+			fprintf(f, "            </slot>\n");
+			fprintf(f, "          </slot:value>\n");
+			fprintf(f, "        </slot>\n");
+		}
+		fprintf(f, "      </slot:value>\n");
 		fprintf(f, "    </slot>\n");
 	}
 
@@ -288,6 +338,8 @@ write_accounts(FILE *f, list *l)
 			fprintf(f, "  </act:commodity>\n");
 		}
 		fprintf(f, "  <act:commodity-scu>%d</act:commodity-scu>\n", a->scu);
+		if (a->nonstdscu)
+			fprintf(f, "  <act:non-standard-scu/>\n");
 		if (a->description)
 			fprintf(f, "  <act:description>%s</act:description>\n",
 					xml_str(a->description));
