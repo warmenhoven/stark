@@ -1212,7 +1212,7 @@ detail_handle_key(int c)
 }
 
 void
-display_run()
+display_run(char *filename)
 {
 	int c;
 
@@ -1247,7 +1247,11 @@ display_run()
 			clear();
 			redraw_screen();
 			continue;
+		} else if (c == 19) {	/* ^S */
+			write_file(filename);
+			continue;
 		}
+
 
 		switch (display_mode) {
 		case ACCT_LIST:

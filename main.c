@@ -28,11 +28,7 @@ main(int argc, char **argv)
 		   (end.tv_sec - begin.tv_sec),
 		   (end.tv_usec - begin.tv_usec));
 
-	display_run();
-
-#ifdef DEBUG
-	write_file("testout");
-#endif
+	display_run(argv[1]);
 
 	return 0;
 }

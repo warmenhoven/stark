@@ -110,7 +110,7 @@ extern void value_multiply(value *, value *, value *);
 
 extern void gnucash_init(char *);
 
-extern void display_run(void);
+extern void display_run(char *);
 
 extern void write_file(const char *);
 
