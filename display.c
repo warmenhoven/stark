@@ -898,7 +898,6 @@ detail_handle_key(int c)
 	/* MOTION */
 	case KEY_DOWN:
 	case 'j':
-	case 14:	/* ^N */
 		if (curr_trans->expanded) {
 			list *splits = curr_trans->splits;
 			if (curr_trans->selected) {
@@ -923,11 +922,12 @@ detail_handle_key(int c)
 				if (splits) {
 					redraw_screen();
 					break;
-				} else {
-					unexpand_transaction();
 				}
 			}
 		}
+		/* fallthrough */
+	case 14:	/* ^N */
+		unexpand_transaction();
 		l = list_find(disp_trans, curr_trans);
 		assert(l);
 		if (l->next) {
@@ -949,31 +949,29 @@ detail_handle_key(int c)
 		break;
 	case KEY_UP:
 	case 'k':
-	case 16:	/* ^P */
-		if (curr_trans->expanded) {
-			if (!curr_trans->selected) {
-				list *splits = curr_trans->splits;
-				split *s = splits->data;
-				if (s->selected) {
-					s->selected = 0;
-					curr_trans->selected = 1;
-				} else {
-					for (splits = splits->next; splits; splits = splits->next) {
-						s = splits->data;
-						if (!s->selected)
-							continue;
-						s->selected = 0;
-						assert(splits->prev);
-						s = splits->prev->data;
-						s->selected = 1;
-					}
-				}
-				redraw_screen();
-				break;
+		if (curr_trans->expanded && !curr_trans->selected) {
+			list *splits = curr_trans->splits;
+			split *s = splits->data;
+			if (s->selected) {
+				s->selected = 0;
+				curr_trans->selected = 1;
 			} else {
-				unexpand_transaction();
+				for (splits = splits->next; splits; splits = splits->next) {
+					s = splits->data;
+					if (!s->selected)
+						continue;
+					s->selected = 0;
+					assert(splits->prev);
+					s = splits->prev->data;
+					s->selected = 1;
+				}
 			}
+			redraw_screen();
+			break;
 		}
+		/* fallthrough */
+	case 16:	/* ^P */
+		unexpand_transaction();
 		l = list_find(disp_trans, curr_trans);
 		if (l && l->prev) {
 			curr_trans->selected = 0;
