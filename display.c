@@ -289,7 +289,7 @@ draw_trans(transaction *t, int line, float total)
 		else
 			o = t->splits->next->data;
 
-		a = find_account(s->account, accounts);
+		a = find_account(s->account);
 		if (!a)
 			mvaddstr(line, 44, "                     ");
 		else
@@ -344,7 +344,7 @@ draw_split(split *s, int line)
 		mvaddstr(line, 19, s->memo);
 	mvaddstr(line, 41, "   ");
 
-	a = find_account(s->account, accounts);
+	a = find_account(s->account);
 	if (!a)
 		mvaddstr(line, 44, "                     ");
 	else
@@ -870,7 +870,7 @@ jump_split(split *s)
 	account *a;
 	list *l;
 
-	a = find_account(s->account, accounts);
+	a = find_account(s->account);
 	if (!a)
 		return;
 

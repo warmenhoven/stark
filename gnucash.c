@@ -18,6 +18,8 @@ list *commodities = NULL;
 list *accounts = NULL;
 list *transactions = NULL;
 
+static list *acct_list = NULL;
+
 static void
 bail(const char *f, ...)
 {
@@ -217,19 +219,36 @@ gnucash_get_type(char *t)
 	return 0;
 }
 
-account *
-find_account(char *guid, list *l)
+static int
+gnucash_acct_cmp(const void *one, const void *two)
 {
-	while (l) {
-		account *a = l->data;
-		l = l->next;
+	const account *a = one, *b = two;
+	return strcmp(a->id, b->id);
+}
 
-		if (!strcmp(guid, a->id))
+account *
+find_account(char *guid)
+{
+	int len, base = 0;
+
+	len = list_length(acct_list);
+	while (len) {
+		account *a;
+		list *l;
+		int ret;
+
+		len = (len + 1) / 2;
+		l = list_nth(acct_list, base + len - 1);
+
+		a = l->data;
+		ret = strcmp(a->id, guid);
+		if (!ret)
 			return a;
 
-		a = find_account(guid, a->subs);
-		if (a)
-			return a;
+		if (ret < 0) {
+			/* a < guid, bump base */
+			base += len;
+		}
 	}
 
 	return NULL;
@@ -262,7 +281,7 @@ gnucash_add_account(void *acc)
 
 	data = xml_get_child(acc, "act:parent");
 	if (data) {
-		a->parent = find_account(xml_get_data(data), accounts);
+		a->parent = find_account(xml_get_data(data));
 		if (!a->parent)
 			bail("Couldn't find parent %s for %s\n", xml_get_data(data),
 				 a->name);
@@ -270,6 +289,8 @@ gnucash_add_account(void *acc)
 	} else {
 		accounts = list_append(accounts, a);
 	}
+
+	acct_list = list_insert_sorted(acct_list, a, gnucash_acct_cmp);
 
 	data = xml_get_child(acc, "act:commodity");
 	if (data) {
@@ -361,7 +382,7 @@ gnucash_add_split(transaction *t, void *sp)
 
 	data = xml_get_child(sp, "split:account");
 	if (data && xml_get_data(data)) {
-		account *a = find_account(xml_get_data(data), accounts);
+		account *a = find_account(xml_get_data(data));
 		if (!a)
 			bail("Split for non-account (%s)?\n", xml_get_data(data));
 		if (!list_find(a->transactions, t)) {

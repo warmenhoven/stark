@@ -76,7 +76,7 @@ extern list *commodities;
 extern list *accounts;
 extern list *transactions;
 
-extern account *find_account(char *, list *);
+extern account *find_account(char *);
 
 extern void gnucash_init(char *);
 
