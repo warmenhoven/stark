@@ -52,9 +52,9 @@ clean:
 
 dist:
 	rm -f $(TARGET).tgz
-	mkdir -p tmp/$(TARGET)
-	cp Makefile README *.[ch] tmp/$(TARGET)
-	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)
+	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
+	cp Makefile README *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
+	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)-`date +%Y%m%d`
 	rm -rf tmp
 
 test: $(TARGET)
