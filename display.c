@@ -17,7 +17,7 @@ static list *disp_trans = NULL;
 static transaction *curr_trans = NULL;
 
 static int
-build_exp_accts(list *accts, list **l)
+build_expd_accts(list *accts, list **l)
 {
 	int i = 0;
 
@@ -29,7 +29,7 @@ build_exp_accts(list *accts, list **l)
 		i++;
 
 		if (a->expanded)
-			i += build_exp_accts(a->subs, l);
+			i += build_expd_accts(a->subs, l);
 	}
 
 	return i;
@@ -150,11 +150,11 @@ draw_acct(account *a, int line)
 static void
 draw_accounts()
 {
-	list *exp = NULL, *l;
+	list *expd = NULL, *l;
 	int i;
 
-	build_exp_accts(accounts, &exp);
-	l = list_nth(exp, skip_acct);
+	build_expd_accts(accounts, &expd);
+	l = list_nth(expd, skip_acct);
 
 	for (i = 0; l && i < LINES; i++) {
 		disp_acct = list_append(disp_acct, l->data);
@@ -162,7 +162,7 @@ draw_accounts()
 		l = l->next;
 	}
 
-	list_free(exp);
+	list_free(expd);
 }
 
 static void
@@ -472,7 +472,7 @@ select_prev_acct(account *a)
 	list *l;
 
 	if (!a->parent) {
-		list *l = list_find(accounts, a);
+		l = list_find(accounts, a);
 		if (l->prev) {
 			return get_last_expanded(l->prev->data);
 		} else {
@@ -491,17 +491,17 @@ select_prev_acct(account *a)
 static void
 recalc_skip_acct()
 {
-	list *exp = NULL;
+	list *expd = NULL;
 	list *l;
 	int len;
 	int i;
 
-	len = build_exp_accts(accounts, &exp);
+	len = build_expd_accts(accounts, &expd);
 
-	l = list_find(exp, curr_acct);
+	l = list_find(expd, curr_acct);
 	i = list_length(l->next);
 
-	list_free(exp);
+	list_free(expd);
 
 	if ((len - skip_acct) - i < LINES) {
 		/* len - skip_acct is how many accounts are displayed from the first one

@@ -1,6 +1,6 @@
 CC = gcc
 LDLIBS = -lcurses -lexpat
-CFLAGS += -g -W -Wall -Werror -ansi -pedantic
+CFLAGS += -g -W -Wall -Werror -Wshadow -ansi -pedantic
 
 OBJS = display.o gnucash.o list.o main.o xml.o
 
