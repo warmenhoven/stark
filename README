@@ -66,6 +66,7 @@
 
 	* reporting
 	* reload from file
+	* fetch updated stock quotes
 	* editable
 
    I don't know if and when I'll ever get to this. Feel free to send a patch.
