@@ -119,6 +119,9 @@ draw_accts(list *l, int depth, int *line, int *s)
 		if (!*s) {
 			move((*line)++, 0);
 
+			if (a->selected)
+				attron(A_REVERSE);
+
 			for (i = depth; i > 0; i--) {
 				account *parent = a->parent, *child = a;
 				list *x;
@@ -153,16 +156,13 @@ draw_accts(list *l, int depth, int *line, int *s)
 				addch(ACS_LLCORNER);
 			}
 			addch(' ');
-			if (a->selected) {
-				attron(A_REVERSE);
-				addstr(a->name);
-				attroff(A_REVERSE);
-			} else {
-				addstr(a->name);
-			}
+			addstr(a->name);
 
-			for (i = 0; i < COLS - strlen(a->name); i++)
+			for (i = 0; i < COLS - strlen(a->name) - (2 * (depth + 1)); i++)
 				addch(' ');
+
+			if (a->selected)
+				attroff(A_REVERSE);
 
 			disp_acct = list_append(disp_acct, a);
 
@@ -242,6 +242,7 @@ close_all(account *a)
 static int
 list_handle_key(int c)
 {
+	account *ta;
 	list *l;
 
 	switch (c) {
@@ -356,6 +357,36 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
+	case KEY_HOME:
+		curr_acct->selected = 0;
+		curr_acct = accounts->data;
+		curr_acct->selected = 1;
+		skip = 0;
+		redraw_screen();
+		break;
+	case KEY_END:
+		curr_acct->selected = 0;
+
+		l = accounts;
+		do {
+			while (l->next) l = l->next;
+			ta = l->data;
+			l = ta->subs;
+		} while (l && ta->expanded);
+
+		if (!list_find(disp_acct, ta)) {
+			account *a = curr_acct;
+			do {
+				a = select_next_acct(a);
+				if (!list_find(disp_acct, a))
+					skip++;
+			} while (a != ta);
+		}
+
+		curr_acct = ta;
+		curr_acct->selected = 1;
+		redraw_screen();
+		break;
 	case KEY_RESIZE:
 		endwin();
 		initscr();
@@ -400,6 +431,7 @@ display_run()
 	nonl();
 	raw();
 	noecho();
+	notimeout(stdscr, TRUE);
 	curs_set(0);
 
 	redraw_screen();
