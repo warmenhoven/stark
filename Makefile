@@ -39,13 +39,13 @@ endif
 
 TARGET = stark
 
-OBJS = display.o gnucash.o list.o main.o xml.o
+OBJS = display.o gnucash.o list.o main.o tree.o xml.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
 
 # yeah, i know, this isn't strictly correct. so shoot me. they're small files.
-$(OBJS): list.h main.h xml.h
+$(OBJS): list.h main.h tree.h xml.h
 
 clean:
 	rm -rf $(TARGET) *.o core $(TARGET).tgz
@@ -59,3 +59,6 @@ dist:
 
 test: $(TARGET)
 	./stark gcd
+
+timetest: $(TARGET)
+	STARK_TIME=1 time ./stark gcd

@@ -74,7 +74,6 @@ typedef struct {
 
 extern list *commodities;
 extern list *accounts;
-extern list *transactions;
 
 extern account *find_account(char *);
 

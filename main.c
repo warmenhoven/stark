@@ -17,7 +17,8 @@ main(int argc, char **argv)
 
 	gnucash_init(argv[1]);
 
-	display_run();
+	if (!getenv("STARK_TIME"))
+		display_run();
 
 	return 0;
 }

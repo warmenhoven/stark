@@ -10,19 +10,13 @@
 #include <string.h>
 #include <time.h>
 #include "main.h"
+#include "tree.h"
 #include "xml.h"
 
 static XML_Parser parser;
 
 list *commodities = NULL;
 list *accounts = NULL;
-list *transactions = NULL;
-
-typedef struct _tree {
-	struct _tree *prev;
-	struct _tree *next;
-	void *data;
-} tree;
 
 static tree *acct_tree = NULL;
 
@@ -225,73 +219,6 @@ gnucash_get_type(char *t)
 	return 0;
 }
 
-/* _sorted routines are misnamed; they're actually binary trees */
-static tree *
-tree_find_sorted(tree *l, void *data, cmpfunc func)
-{
-	tree *s = l;
-
-	while (s) {
-		int ret = func(s->data, data);
-
-		if (!ret)
-			return s;
-		else if (ret < 0)
-			s = s->prev;
-		else
-			s = s->next;
-	}
-
-	return NULL;
-}
-
-static tree *
-tree_new(void *data)
-{
-	tree *t = calloc(sizeof (tree), 1);
-	t->data = data;
-	return t;
-}
-
-static tree *
-tree_insert_sorted(tree *l, void *data, cmpfunc func)
-{
-	tree *s = l;
-
-	if (!l)
-		return tree_new(data);
-
-	while (s) {
-		int ret = func(s->data, data);
-
-		if (!ret) {
-			if (!s->prev) {
-				s->prev = tree_new(data);
-				break;
-			}
-			if (!s->next) {
-				s->next = tree_new(data);
-				break;
-			}
-			s = s->prev;
-		} else if (ret < 0) {
-			if (!s->prev) {
-				s->prev = tree_new(data);
-				break;
-			}
-			s = s->prev;
-		} else {
-			if (!s->next) {
-				s->next = tree_new(data);
-				break;
-			}
-			s = s->next;
-		}
-	}
-
-	return l;
-}
-
 static int
 gnucash_acct_cmp(const void *one, const void *two)
 {
@@ -303,13 +230,13 @@ account *
 find_account(char *guid)
 {
 	account a;
-	tree *l;
+	tree *t;
 
 	a.id = guid;
 
-	l = tree_find_sorted(acct_tree, &a, gnucash_acct_cmp);
-	if (l)
-		return l->data;
+	t = tree_find(acct_tree, &a, gnucash_acct_cmp);
+	if (t)
+		return t->data;
 	return NULL;
 }
 
@@ -349,7 +276,7 @@ gnucash_add_account(void *acc)
 		accounts = list_append(accounts, a);
 	}
 
-	acct_tree = tree_insert_sorted(acct_tree, a, gnucash_acct_cmp);
+	acct_tree = tree_insert(acct_tree, a, gnucash_acct_cmp);
 
 	data = xml_get_child(acc, "act:commodity");
 	if (data) {
@@ -464,8 +391,6 @@ gnucash_add_transaction(void *trans)
 	t = calloc(sizeof (transaction), 1);
 	if (!t)
 		bail("can't calloc!\n");
-
-	transactions = list_append(transactions, t);
 
 	data = xml_get_child(trans, "trn:id");
 	if (!data || !xml_get_data(data))

@@ -61,7 +61,7 @@ list_append(list *l, void *data)
 }
 
 list *
-list_insert_sorted(list *l, void *data, cmpfunc func)
+list_insert_sorted(list *l, void *data, list_cmpfunc func)
 {
 	list *s = l, *t;
 
