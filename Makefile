@@ -97,9 +97,13 @@ $(TARGET).1: manpage.1.in
 tags: $(SRCS) $(HDRS)
 	ctags $(SRCS) $(HDRS)
 
-clean:
-	rm -f *.o $(TARGET) $(TARGET).1
-	rm -f *.bb *.bbg *.da *.gcov
+mostlyclean:
+	rm -f $(OBJS)
+	rm -f *.bb *.bbg *.da
+
+clean: mostlyclean
+	rm -f *.gcov
+	rm -f $(TARGET) $(TARGET).1
 	rm -f core gmon.out
 
 distclean: clean
@@ -139,4 +143,4 @@ test: $(TARGET)
 
 depend: $(DEPS) .depend
 
-.PHONY: depend clean dist distclean install install-strip test
+.PHONY: depend mostlyclean clean dist distclean install install-strip test
