@@ -75,6 +75,7 @@ TARGET = stark
 SRCS = $(wildcard *.c)
 HDRS = $(wildcard *.h)
 OBJS = $(patsubst %.c, %.o, $(SRCS))
+DEPS = $(patsubst %.c, .%.d, $(SRCS))
 
 export CC TARGET SRCS OBJS CFLAGS LDLIBS
 
@@ -82,20 +83,22 @@ export CC TARGET SRCS OBJS CFLAGS LDLIBS
 
 all: $(TARGET) $(TARGET).1
 
-$(TARGET): .depend
+$(TARGET): $(DEPS) .depend
 	@$(MAKE) -f .depend $(TARGET)
 
 $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
 
 clean:
-	rm -rf .depend \
-		*.o $(TARGET) $(TARGET).1 \
-		$(TARGET).tgz \
-		*.bb *.bbg *.da *.gcov \
-		core gmon.out
+	rm -f $(DEPS) .depend
+	rm -f *.o $(TARGET) $(TARGET).1
+	rm -f $(TARGET).tgz
+	rm -f *.bb *.bbg *.da *.gcov
+	rm -f core gmon.out
+	rm -rf tmp
 
 dist:
+	rm -rf tmp
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
 	cp Makefile README manpage.1.in *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
@@ -111,12 +114,15 @@ install: $(TARGET) $(TARGET).1
 test: $(TARGET)
 	./$(TARGET) ~/financial/gcd
 
-# rebuilding .depend every time any .c or .h changes is probably overkill
-.depend: $(SRCS) $(HDRS)
-	$(CC) -MM $(CFLAGS) $(SRCS) > $@
-	@echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
-	@echo -e "\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+# rebuilding every .d every time any .h changes is probably overkill
+.%.d: %.c $(HDRS)
+	$(CC) -MM $(CFLAGS) $< > $@
 
-depend: .depend
+.depend:
+	echo -e "include $(DEPS)" > $@
+	echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
+	echo -e "\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+
+depend: $(DEPS) .depend
 
 .PHONY: depend clean dist install test

@@ -3,6 +3,7 @@
 *.da
 *.gcov
 .cvsignore
+.*.d
 .depend
 gmon.out
 stark
