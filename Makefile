@@ -1,10 +1,6 @@
 CC = gcc
 LDLIBS = -lcurses -lexpat
 
-ifneq "$(DEBUG)" ""
-CFLAGS += -g3 -DDEBUG -O0
-endif
-
 ifneq "$(PICKY)" ""
 NITPICKY_WARNINGS = -Werror \
 		    -Wall \
@@ -32,9 +28,12 @@ CFLAGS += $(NITPICKY_WARNINGS)
 endif
 
 ifneq "$(PERF)" ""
-CFLAGS += -fprofile-arcs -ftest-coverage -O0
+CFLAGS += -pg -fprofile-arcs -ftest-coverage -O3
+LDLIBS += -pg
 else
-ifeq "$(DEBUG)" ""
+ifneq "$(DEBUG)" ""
+CFLAGS += -g3 -DDEBUG -O0
+else
 CFLAGS += -O3
 endif
 endif
@@ -50,7 +49,7 @@ $(TARGET): $(OBJS)
 $(OBJS): list.h main.h tree.h xml.h
 
 clean:
-	rm -rf $(TARGET) *.o core $(TARGET).tgz
+	rm -rf $(TARGET) *.bb *.bbg *.da *.gcov *.o core gmon.out $(TARGET).tgz
 
 dist:
 	rm -f $(TARGET).tgz
