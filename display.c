@@ -1238,6 +1238,13 @@ display_run(char *filename)
 			clear();
 			redraw_screen();
 			continue;
+		} else if (c == 17) {	/* ^Q */
+			clear();
+			refresh();
+			endwin();
+			list_free(disp_acct);
+			list_free(disp_trans);
+			return;
 		} else if (c == 18) {	/* ^R */
 			char *acctid, *transid = NULL;
 

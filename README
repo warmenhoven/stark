@@ -68,6 +68,7 @@
    That makes it pretty useless, except for when you're out and only have ssh
    access and need to see how much money you have. Here's a quick TODO list:
 
+	* currencies
 	* reporting
 	* fetch updated stock quotes
 	* editable

@@ -109,9 +109,9 @@ install: $(TARGET) $(TARGET).1
 	$(INSTALL) -m 644 $(TARGET).1 $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
 
 test: $(TARGET)
-	./$(TARGET) gcd
+	./$(TARGET) ~/financial/gcd
 
-# rebuilding every .depend every time any .c or .h changes is probably bad
+# rebuilding .depend every time any .c or .h changes is probably overkill
 .depend: $(SRCS) $(HDRS)
 	$(CC) -MM $(CFLAGS) $(SRCS) > $@
 	@echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
@@ -119,4 +119,4 @@ test: $(TARGET)
 
 depend: .depend
 
-.PHONY: depend clean dist install
+.PHONY: depend clean dist install test
