@@ -8,7 +8,7 @@ static enum {
 	ACCT_DETAIL
 } display_mode;
 
-static int skip = 0;
+static int skip_acct = 0;
 
 static account *curr_acct = NULL;
 
@@ -152,7 +152,7 @@ draw_accounts()
 	int i;
 
 	build_exp_accts(accounts, &exp);
-	l = list_nth(exp, skip);
+	l = list_nth(exp, skip_acct);
 
 	for (i = 0; l && i < LINES; i++) {
 		disp_acct = list_append(disp_acct, l->data);
@@ -388,16 +388,16 @@ recalc_skip()
 
 	list_free(exp);
 
-	if ((len - skip) - i < LINES) {
-		/* len - skip is how many accounts are displayed from the first one
-		 * that's not skipped. (len - skip) - i is how many accounts there are
-		 * between the first displayed and the current account. if that value is
-		 * less than the number of lines, then the current account is still
-		 * displayed and we don't need to adjust the skip. */
+	if ((len - skip_acct) - i < LINES) {
+		/* len - skip_acct is how many accounts are displayed from the first one
+		 * that's not skipped. (len - skip_acct) - i is how many accounts there
+		 * are between the first displayed and the current account. if that
+		 * value is less than the number of lines, then the current account is
+		 * still displayed and we don't need to adjust the skip_acct. */
 		return;
 	}
 
-	skip = len - LINES - i;
+	skip_acct = len - LINES - i;
 }
 
 static int
@@ -432,7 +432,7 @@ list_handle_key(int c)
 			do {
 				a = select_prev_acct(a);
 				if (!list_find(disp_acct, a))
-					skip--;
+					skip_acct--;
 			} while (a != curr_acct->parent);
 			curr_acct->selected = 0;
 			curr_acct = a;
@@ -452,7 +452,7 @@ list_handle_key(int c)
 		} else {
 			account *a = select_next_acct(curr_acct);
 			if (a != curr_acct) {
-				skip++;
+				skip_acct++;
 				curr_acct->selected = 0;
 				curr_acct = a;
 				curr_acct->selected = 1;
@@ -473,7 +473,7 @@ list_handle_key(int c)
 		} else {
 			account *a = select_prev_acct(curr_acct);
 			if (a != curr_acct) {
-				skip--;
+				skip_acct--;
 				curr_acct->selected = 0;
 				curr_acct = a;
 				curr_acct->selected = 1;
@@ -549,7 +549,7 @@ list_handle_key(int c)
 		curr_acct->selected = 0;
 		curr_acct = accounts->data;
 		curr_acct->selected = 1;
-		skip = 0;
+		skip_acct = 0;
 		redraw_screen();
 		break;
 	case 5:		/* ^E */
@@ -568,7 +568,7 @@ list_handle_key(int c)
 			do {
 				a = select_next_acct(a);
 				if (!list_find(disp_acct, a))
-					skip++;
+					skip_acct++;
 			} while (a != ta);
 		}
 
