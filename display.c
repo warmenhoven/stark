@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <curses.h>
 #include <stdlib.h>
 #include <string.h>
@@ -90,6 +91,8 @@ draw_acct(account *a, int line)
 			x = list_find(accounts, child);
 		}
 
+		assert(x);
+
 		if (x->next)
 			addch(ACS_VLINE);
 		else
@@ -100,6 +103,7 @@ draw_acct(account *a, int line)
 
 	if (a->parent) {
 		list *l = list_find(a->parent->subs, a);
+		assert(l);
 		if (l->next)
 			sibling = 1;
 	}
@@ -409,6 +413,7 @@ select_next_acct(account *a)
 	 * we're a top-level account */
 	if (!a->parent) {
 		l = list_find(accounts, a);
+		assert(l);
 		if (l->next) {
 			return l->next->data;
 		} else {
@@ -421,6 +426,7 @@ select_next_acct(account *a)
 
 	/* we're not a top-level account, try and select our next sibling */
 	l = list_find(a->parent->subs, a);
+	assert(l);
 	if (l->next) {
 		return l->next->data;
 	}
@@ -431,6 +437,7 @@ select_next_acct(account *a)
 		/* our parent is top-level */
 		if (!p->parent) {
 			l = list_find(accounts, p);
+			assert(l);
 			if (l->next) {
 				/* return the next top-level account */
 				return l->next->data;
@@ -441,6 +448,7 @@ select_next_acct(account *a)
 		}
 
 		l = list_find(p->parent->subs, p);
+		assert(l);
 		if (l->next) {
 			/* our parent has a sibling, let's move to them */
 			return l->next->data;
@@ -473,6 +481,7 @@ select_prev_acct(account *a)
 
 	if (!a->parent) {
 		l = list_find(accounts, a);
+		assert(l);
 		if (l->prev) {
 			return get_last_expanded(l->prev->data);
 		} else {
@@ -481,6 +490,7 @@ select_prev_acct(account *a)
 	}
 
 	l = list_find(a->parent->subs, a);
+	assert(l);
 	if (l->prev) {
 		return get_last_expanded(l->prev->data);
 	} else {
@@ -499,6 +509,7 @@ recalc_skip_acct(void)
 	len = build_expd_accts(accounts, &expd);
 
 	l = list_find(expd, curr_acct);
+	assert(l);
 	i = list_length(l->next);
 
 	list_free(expd);
@@ -528,6 +539,7 @@ recalc_skip_trans(void)
 	len = list_length(curr_acct->transactions);
 
 	l = list_find(curr_acct->transactions, curr_trans);
+	assert(l);
 	i = list_length(l->next);
 
 	if ((len - skip_trans) - i < LINES)
@@ -609,6 +621,7 @@ list_handle_key(int c)
 	case 'j':
 	case 14:	/* ^N */
 		l = list_find(disp_acct, curr_acct);
+		assert(l);
 		if (l && l->next) {
 			curr_acct->selected = 0;
 			curr_acct = l->next->data;
@@ -770,6 +783,7 @@ detail_handle_key(int c)
 	case 'j':
 	case 14:	/* ^N */
 		l = list_find(disp_trans, curr_trans);
+		assert(l);
 		if (l->next) {
 			curr_trans->selected = 0;
 			curr_trans = l->next->data;
@@ -777,6 +791,7 @@ detail_handle_key(int c)
 			redraw_screen();
 		} else {
 			l = list_find(curr_acct->transactions, curr_trans);
+			assert(l);
 			if (l->next) {
 				skip_trans++;
 				curr_trans->selected = 0;
@@ -797,6 +812,7 @@ detail_handle_key(int c)
 			redraw_screen();
 		} else {
 			l = list_find(curr_acct->transactions, curr_trans);
+			assert(l);
 			if (l->prev) {
 				skip_trans--;
 				curr_trans->selected = 0;
