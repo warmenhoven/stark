@@ -126,6 +126,52 @@ get_value(account *a)
 	return total;
 }
 
+static int
+build_exp_accts(list *accts, list **l)
+{
+	int i = 0;
+
+	while (accts) {
+		account *a = accts->data;
+		accts = accts->next;
+
+		*l = list_append(*l, a);
+		i++;
+
+		if (a->expanded)
+			i += build_exp_accts(a->subs, l);
+	}
+
+	return i;
+}
+
+static void
+recalc_skip()
+{
+	list *exp = NULL;
+	list *l;
+	int len;
+	int i;
+
+	len = build_exp_accts(accounts, &exp);
+
+	l = list_find(exp, curr_acct);
+	i = list_length(l->next);
+
+	list_free(exp);
+
+	if ((len - skip) - i < LINES) {
+		/* len - skip is how many accounts are displayed from the first one
+		 * that's not skipped. (len - skip) - i is how many accounts there are
+		 * between the first displayed and the current account. if that value is
+		 * less than the number of lines, then the current account is still
+		 * displayed and we don't need to adjust the skip. */
+		return;
+	}
+
+	skip = len - LINES - i;
+}
+
 static void
 draw_accts(list *l, int depth, int *line, int *s)
 {
@@ -197,8 +243,8 @@ draw_accts(list *l, int depth, int *line, int *s)
 
 			addch('$');
 			dlen++;
-			dlen += sprintf(value, "%.2f", get_value(a));
 
+			dlen += sprintf(value, "%.2f", get_value(a));
 			for (; dlen < 80; dlen++)
 				addch(' ');
 			addstr(value);
@@ -227,6 +273,65 @@ draw_accts(list *l, int depth, int *line, int *s)
 }
 
 static void
+draw_trans()
+{
+	int i, j = 0;
+
+	list *l = curr_acct->transactions;
+	while (l && l->next) l = l->next;
+
+	move(0, 0);
+	addstr(" DATE  ");
+	addch(ACS_VLINE);
+	addstr(" NUM  ");
+	addch(ACS_VLINE);
+	addstr(" DESCRIPTION             ");
+	addch(ACS_VLINE);
+	addstr(" TRANSFER                ");
+	addch(ACS_VLINE);
+	addstr(" R ");
+	addch(ACS_VLINE);
+	addstr("    INC     ");
+	addch(ACS_VLINE);
+	addstr("    DEC     ");
+	addch(ACS_VLINE);
+	addstr(" BALANCE");
+	clrtoeol();
+
+	move(1, 0);
+	for (i = 0; i < 7; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 6; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 25; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 25; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 3; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 12; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (i = 0; i < 12; i++)
+		addch(ACS_HLINE);
+	addch(ACS_BTEE);
+	j += i + 1;
+	for (; j < COLS; j++)
+		addch(ACS_HLINE);
+}
+
+static void
 redraw_screen()
 {
 	int line = 0, s = skip;
@@ -238,9 +343,7 @@ redraw_screen()
 		draw_accts(accounts, 0, &line, &s);
 		break;
 	case ACCT_DETAIL:
-#if 0
-		date | num | description    | transfer    | r | inc | dec | balance
-#endif
+		draw_trans();
 		break;
 	}
 
@@ -329,6 +432,7 @@ list_handle_key(int c)
 		break;
 	case KEY_DOWN:
 	case 'j':
+	case 14:	/* ^N */
 		l = list_find(disp_acct, curr_acct);
 		if (l && l->next) {
 			curr_acct->selected = 0;
@@ -349,6 +453,7 @@ list_handle_key(int c)
 		break;
 	case KEY_UP:
 	case 'k':
+	case 16:	/* ^P */
 		l = list_find(disp_acct, curr_acct);
 		if (l && l->prev) {
 			curr_acct->selected = 0;
@@ -430,6 +535,7 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
+	case 1:		/* ^A */
 	case KEY_HOME:
 		curr_acct->selected = 0;
 		curr_acct = accounts->data;
@@ -437,6 +543,7 @@ list_handle_key(int c)
 		skip = 0;
 		redraw_screen();
 		break;
+	case 5:		/* ^E */
 	case KEY_END:
 		curr_acct->selected = 0;
 
@@ -463,6 +570,7 @@ list_handle_key(int c)
 	case KEY_RESIZE:
 		endwin();
 		initscr();
+		recalc_skip();
 		clear();
 		redraw_screen();
 		break;

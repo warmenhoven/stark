@@ -61,6 +61,24 @@ list_append(list *l, void *data)
 }
 
 list *
+list_insert_sorted(list *l, void *data, cmpfunc func)
+{
+	list *s = l, *t;
+
+	if (!s) return list_new(data);
+
+	while (func(s->data, data) > 0 && s->next) s = s->next;
+	t = s->next;
+	s->next = list_new(data);
+	s->next->prev = s;
+	s->next->next = t;
+	if (t)
+		t->prev = s->next;
+
+	return l;
+}
+
+list *
 list_prepend(list *l, void *data)
 {
 	list *s = list_new(data);

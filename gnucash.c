@@ -320,6 +320,12 @@ gnucash_print_accounts(list *l, char *prefix)
 	}
 }
 
+static int
+gnucash_trans_cmp(const void *a, const void *b)
+{
+	return ((transaction *)a)->posted - ((transaction *)b)->posted;
+}
+
 static void
 gnucash_add_split(transaction *t, void *sp)
 {
@@ -354,7 +360,8 @@ gnucash_add_split(transaction *t, void *sp)
 			if (!a)
 				bail("Split for non-account (%s)?\n", xml_get_data(data));
 			if (!list_find(a->transactions, t)) {
-				a->transactions = list_append(a->transactions, t);
+				a->transactions =
+					list_insert_sorted(a->transactions, t, gnucash_trans_cmp);
 				a->quantity += s->quantity;
 			}
 		} else if (!strcmp(xml_name(data), "split:action")) {
