@@ -88,7 +88,8 @@ list_prepend(list *l, void *data)
 {
 	list *s = list_new(data);
 	s->next = l;
-	s->next->prev = s;
+	if (s->next)
+		s->next->prev = s;
 	return s;
 }
 
