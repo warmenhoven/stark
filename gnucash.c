@@ -585,9 +585,18 @@ gnucash_parse_book(void *book)
 		children = children->next;
 
 		if (!strcmp(xml_name(child), "book:id")) {
+			/* we only need this to write the file */
 			book_guid = strdup(xml_get_data(child));
+
 		} else if (!strcmp(xml_name(child), "book:slots")) {
 			/* XXX */
+		} else if (!strcmp(xml_name(child), "gnc:GncCustomer")) {
+			/* XXX */
+		} else if (!strcmp(xml_name(child), "gnc:GncJob")) {
+			/* XXX */
+		} else if (!strcmp(xml_name(child), "gnc:GncVendor")) {
+			/* XXX */
+
 		} else if (!strcmp(xml_name(child), "gnc:count-data")) {
 			/* we don't really need to do anything here either. i guess we could
 			 * use this for validation purposes, but eh. */
@@ -611,6 +620,7 @@ gnucash_parse_book(void *book)
 				bail("I don't understand transaction version %s\n",
 					 xml_get_attrib(book, "version"));
 			gnucash_add_transaction(child);
+
 		} else {
 			bail("I don't understand %s\n", xml_name(child));
 		}
