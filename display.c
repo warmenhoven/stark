@@ -1101,10 +1101,6 @@ detail_handle_key(int c)
 				curr_trans->selected = 1;
 				if (expanded) {
 					expand_transaction();
-					if (list_length(curr_trans->splits) >
-						list_length(((transaction *)l->data)->splits))
-						skip_trans += list_length(curr_trans->splits) -
-							list_length(((transaction *)l->data)->splits);
 				} else {
 					skip_trans++;
 				}
