@@ -384,6 +384,7 @@ draw_transactions(void)
 	list_free(disp_trans);
 	disp_trans = NULL;
 
+	assert(i >= 0);
 	while (i--) {
 		transaction *t = l->data;
 		balance += trans_balance(t, curr_acct);
@@ -614,6 +615,10 @@ init_trans(void)
 	list *l = curr_acct->transactions;
 	int i = 0;
 
+	if (curr_trans) {
+		curr_trans->selected = 0;
+		curr_trans->expanded = 0;
+	}
 	curr_trans = NULL;
 
 	while (l) {
@@ -824,23 +829,40 @@ list_handle_key(int c)
 static void
 expand_transaction(void)
 {
-	int postlen, len;
+	int prelen, len, postlen;
 	list *l;
+
+	len = list_length(disp_trans);
+	l = list_find(disp_trans, curr_trans);
+	assert(l);
+	postlen = list_length(l->next);
+	prelen = len - postlen;
 
 	len = list_length(curr_trans->splits);
 	if (len <= 2)
 		return;
 
-	l = list_find(disp_trans, curr_trans);
-	assert(l);
-	postlen = list_length(l->next);
-
-	if (len > postlen) {
-		/* more splits than transactions to scoot down */
-		skip_trans -= (len - postlen);
+	if (len + prelen >= LINES + 3) {
+		/* more splits than space below */
+		skip_trans += (len + prelen - LINES - 3);
 	}
 
 	curr_trans->expanded = 1;
+}
+
+static __inline__ void
+unexpand_transaction(void)
+{
+	int len;
+	list *l;
+	if (!curr_trans->expanded)
+		return;
+	len = list_length(disp_trans);
+	l = list_find(disp_trans, curr_trans);
+	assert(l);
+	move(3 + len - list_length(l), 0);
+	clrtobot();
+	curr_trans->expanded = 0;
 }
 
 static int
@@ -863,12 +885,10 @@ detail_handle_key(int c)
 
 	case 13:	/* ^M */
 	case ' ':
+		if (!curr_trans->selected)
+			break;
 		if (curr_trans->expanded) {
-			l = list_find(disp_trans, curr_trans);
-			assert(l);
-			move(LINES - list_length(l->next), 0);
-			clrtobot();
-			curr_trans->expanded = 0;
+			unexpand_transaction();
 		} else {
 			expand_transaction();
 		}
@@ -879,6 +899,35 @@ detail_handle_key(int c)
 	case KEY_DOWN:
 	case 'j':
 	case 14:	/* ^N */
+		if (curr_trans->expanded) {
+			list *splits = curr_trans->splits;
+			if (curr_trans->selected) {
+				split *s = splits->data;
+				s->selected = 1;
+				curr_trans->selected = 0;
+				redraw_screen();
+				break;
+			} else {
+				while (splits) {
+					split *s = splits->data;
+					splits = splits->next;
+					if (!s->selected)
+						continue;
+					s->selected = 0;
+					if (splits) {
+						s = splits->data;
+						s->selected = 1;
+						break;
+					}
+				}
+				if (splits) {
+					redraw_screen();
+					break;
+				} else {
+					unexpand_transaction();
+				}
+			}
+		}
 		l = list_find(disp_trans, curr_trans);
 		assert(l);
 		if (l->next) {
@@ -901,6 +950,30 @@ detail_handle_key(int c)
 	case KEY_UP:
 	case 'k':
 	case 16:	/* ^P */
+		if (curr_trans->expanded) {
+			if (!curr_trans->selected) {
+				list *splits = curr_trans->splits;
+				split *s = splits->data;
+				if (s->selected) {
+					s->selected = 0;
+					curr_trans->selected = 1;
+				} else {
+					for (splits = splits->next; splits; splits = splits->next) {
+						s = splits->data;
+						if (!s->selected)
+							continue;
+						s->selected = 0;
+						assert(splits->prev);
+						s = splits->prev->data;
+						s->selected = 1;
+					}
+				}
+				redraw_screen();
+				break;
+			} else {
+				unexpand_transaction();
+			}
+		}
 		l = list_find(disp_trans, curr_trans);
 		if (l && l->prev) {
 			curr_trans->selected = 0;
@@ -921,6 +994,20 @@ detail_handle_key(int c)
 		break;
 	case KEY_HOME:
 	case 1:		/* ^A */
+		if (curr_trans->expanded) {
+			list *splits = curr_trans->splits;
+			while (splits) {
+				split *s = splits->data;
+				if (s->selected) {
+					s->selected = 0;
+					break;
+				}
+				splits = splits->next;
+			}
+			if (curr_trans != curr_acct->transactions->data) {
+				unexpand_transaction();
+			}
+		}
 		curr_trans->selected = 0;
 		curr_trans = curr_acct->transactions->data;
 		curr_trans->selected = 1;
@@ -929,6 +1016,27 @@ detail_handle_key(int c)
 		break;
 	case KEY_END:
 	case 5:		/* ^E */
+		if (curr_trans->expanded) {
+			l = list_find(curr_acct->transactions, curr_trans);
+			assert(l);
+			if (!l->next) {
+				/* we're the last transaction */
+				list *splits = curr_trans->splits;
+				while (splits) {
+					split *s = splits->data;
+					splits = splits->next;
+					if (splits) {
+						s->selected = 0;
+					} else {
+						s->selected = 1;
+					}
+				}
+				curr_trans->selected = 0;
+				redraw_screen();
+				break;
+			}
+		}
+		unexpand_transaction();
 		init_trans();
 		redraw_screen();
 		break;
