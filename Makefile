@@ -16,6 +16,9 @@ NITPICKY_WARNINGS = -W \
 		    -Wmissing-prototypes \
 		    -Wmissing-declarations \
 		    -Wpadded \
+		    -Wredundant-decls \
+		    -Wnested-externs \
+		    -Winline \
 		    -ansi \
 		    -pedantic
 
