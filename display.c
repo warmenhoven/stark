@@ -839,8 +839,6 @@ expand_transaction(void)
 	prelen = len - postlen;
 
 	len = list_length(curr_trans->splits);
-	if (len <= 2)
-		return;
 
 	if (len + prelen >= LINES + 3) {
 		/* more splits than space below */
@@ -885,8 +883,6 @@ jump_split(split *s)
 	nlen = list_length(l->next);
 	len = list_length(curr_acct->transactions) - nlen;
 	slen = list_length(curr_trans->splits);
-	if (slen <= 2)
-		slen = 0;
 
 	if (len + slen >= LINES - 3) {
 		if (nlen < (LINES - 3) / 2)
@@ -939,8 +935,6 @@ detail_handle_key(int c)
 		break;
 
 	case 10:	/* ^J */
-		if (curr_trans->selected && (list_length(curr_trans->splits) > 2))
-			break;
 		l = curr_trans->splits;
 		while (l) {
 			split *s = l->data;
