@@ -1,3 +1,5 @@
+## VARIABLES
+
 #CC = gcc
 LDLIBS = -lcurses -lexpat
 
@@ -51,11 +53,12 @@ OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
 
 export CC TARGET SRCS OBJS CFLAGS LDLIBS
 
-all: .depend $(TARGET).1
-	@$(MAKE) -f .depend $(TARGET)
+## TARGETS
 
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) $(LDLIBS) -o $@
+all: $(TARGET) $(TARGET).1
+
+$(TARGET): .depend
+	@$(MAKE) -f .depend $(TARGET)
 
 $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
@@ -79,6 +82,11 @@ install: $(TARGET) $(TARGET).1
 test: $(TARGET)
 	./$(TARGET) gcd
 
+# rebuilding every .depend every time any .c or .h changes is probably bad, we could fix that
 .depend: $(SRCS) $(HDRS)
 	@gcc -MM $(SRCS) > $@
 	@echo -e "\n\$$(TARGET): \$$(OBJS)\n\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+
+.PHONY: depend
+
+depend: .depend
