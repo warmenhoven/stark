@@ -4,6 +4,7 @@
 LDLIBS = -lcurses -lexpat
 
 INSTALL = install -c
+STRIP = strip
 PREFIX = usr
 BINDIR = bin
 DATADIR = share
@@ -111,7 +112,7 @@ dist:
 	rm -rf tmp
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
-	cp Makefile README manpage.1.in *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
+	cp Makefile README manpage.1.in $(SRCS) $(HDRS) tmp/$(TARGET)-`date +%Y%m%d`
 	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)-`date +%Y%m%d`
 	rm -rf tmp
 
@@ -120,6 +121,9 @@ install: $(TARGET) $(TARGET).1
 	$(INSTALL) $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)
 	@-mkdir -p $(MANDIR)
 	$(INSTALL) -m 644 $(TARGET).1 $(MANDIR)
+
+install-strip: install
+	$(STRIP) $(DESTDIR)/$(PREFIX)/$(BINDIR)/$(TARGET)
 
 test: $(TARGET)
 	./$(TARGET) ~/financial/gcd
@@ -135,4 +139,4 @@ test: $(TARGET)
 
 depend: $(DEPS) .depend
 
-.PHONY: depend clean dist distclean install test
+.PHONY: depend clean dist distclean install install-strip test
