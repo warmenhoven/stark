@@ -207,6 +207,8 @@ gnucash_get_type(char *t)
 		return CASH;
 	if (!strcmp(t, "CREDIT"))
 		return CREDIT;
+	if (!strcmp(t, "CURRENCY"))
+		return CURRENCY;
 	if (!strcmp(t, "EQUITY"))
 		return EQUITY;
 	if (!strcmp(t, "EXPENSE"))
@@ -217,6 +219,10 @@ gnucash_get_type(char *t)
 		return LIABILITY;
 	if (!strcmp(t, "MUTUAL"))
 		return MUTUAL;
+	if (!strcmp(t, "PAYABLE"))
+		return PAYABLE;
+	if (!strcmp(t, "RECEIVABLE"))
+		return RECEIVABLE;
 	if (!strcmp(t, "STOCK"))
 		return STOCK;
 

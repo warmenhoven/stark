@@ -211,6 +211,8 @@ account_type_string(act_type t)
 		return "CASH";
 	case CREDIT:
 		return "CREDIT";
+	case CURRENCY:
+		return "CURRENCY";
 	case EQUITY:
 		return "EQUITY";
 	case EXPENSE:
@@ -221,6 +223,10 @@ account_type_string(act_type t)
 		return "LIABILITY";
 	case MUTUAL:
 		return "MUTUAL";
+	case PAYABLE:
+		return "PAYABLE";
+	case RECEIVABLE:
+		return "RECEIVABLE";
 	case STOCK:
 		return "STOCK";
 	}

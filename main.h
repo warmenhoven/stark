@@ -27,11 +27,14 @@ typedef enum {
 	BANK,
 	CASH,
 	CREDIT,
+	CURRENCY,
 	EQUITY,
 	EXPENSE,
 	INCOME,
 	LIABILITY,
 	MUTUAL,
+	PAYABLE,
+	RECEIVABLE,
 	STOCK
 } act_type;
 
