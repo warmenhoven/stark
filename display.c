@@ -103,22 +103,6 @@ get_value(account *a, value *total)
 	}
 
 	value_add(total, &curr);
-#if 0
-	float total = 0;
-	list *l = a->subs;
-
-	if (a->commodity && a->commodity->quote)
-			total = a->quantity * a->commodity->quote->value;
-	else if (!a->commodity)
-		total += a->quantity;
-
-	while (l) {
-		total += get_value(l->data);
-		l = l->next;
-	}
-
-	return total;
-#endif
 }
 
 static float
