@@ -37,6 +37,7 @@ typedef struct _acct {
 	float			quantity;
 	commodity		*commodity;
 	list			*transactions;
+	int				placeholder;
 
 	/* display */
 	int				expanded;

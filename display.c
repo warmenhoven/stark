@@ -651,6 +651,8 @@ list_handle_key(int c)
 		return 1;
 
 	case 13:	/* ^M */
+		if (curr_acct->placeholder)
+			break;
 		display_mode = ACCT_DETAIL;
 		clear();
 		init_trans();

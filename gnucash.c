@@ -144,9 +144,7 @@ gnucash_add_price(void *pr)
 			void *tm = xml_get_child(pr, "price:time");
 			p->time = gnucash_get_time(xml_get_child(tm, "ts:date"));
 			if (c->quote->time >= p->time) {
-				/* eh. silently ignore.
-				   fprintf(stderr, "duplicate quote %s\n", c->id);
-				   */
+				/* eh. silently ignore. */
 				free(p);
 				return;
 			} else {
@@ -157,9 +155,7 @@ gnucash_add_price(void *pr)
 			c->quote = p;
 		}
 	} else {
-		/* eh. silently ignore.
-		   fprintf(stderr, "couldn't find commodity %s\n", xml_get_data(id));
-		   */
+		/* eh. silently ignore. */
 		free(p);
 		return;
 	}
@@ -169,10 +165,6 @@ gnucash_add_price(void *pr)
 
 	data = xml_get_child(pr, "price:value");
 	p->value = gnucash_get_value(xml_get_data(data));
-
-	/*
-	printf("%s had price %.02f at %s", c->name, p->value, ctime(&p->time));
-	*/
 }
 
 static void
@@ -291,6 +283,23 @@ gnucash_add_account(void *acc)
 			a->commodity = c;
 	}
 
+	data = xml_get_child(acc, "act:slots");
+	if (data) {
+		list *l = xml_get_children(data);
+		while (l) {
+			void *key, *value;
+			data = l->data;
+			l = l->next;
+			key = xml_get_child(data, "slot:key");
+			value = xml_get_child(data, "slot:value");
+			if (!key || !xml_get_data(key) || !value || !xml_get_data(value))
+				continue;
+			if (strcmp(xml_get_data(key), "placeholder"))
+				continue;
+			if (!strcmp(xml_get_data(value), "true"))
+				a->placeholder = 1;
+		}
+	}
 	/* we should probably handle other things as well... */
 }
 
@@ -479,11 +488,6 @@ gnucash_parse_book(void *book)
 			bail("I don't understand %s\n", xml_name(child));
 		}
 	}
-
-	/*
-	printf("%u transactions\n", list_length(transactions));
-	gnucash_print_accounts(accounts, "");
-	*/
 }
 
 static void
