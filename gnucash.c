@@ -345,7 +345,7 @@ gnucash_add_split(transaction *t, void *sp)
 		} else if (!strcmp(xml_name(data), "split:account")) {
 			account *a = gnucash_find_account(xml_get_data(data), accounts);
 			if (!a)
-				bail("Split for non-account?\n");
+				bail("Split for non-account (%s)?\n", xml_get_data(data));
 			if (!list_find(a->transactions, t)) {
 				a->transactions = list_append(a->transactions, t);
 				a->quantity += s->quantity;
