@@ -984,6 +984,7 @@ detail_handle_key(int c)
 {
 	account *a;
 	list *l;
+	int expanded = 0;
 
 	if (!curr_trans && c != 'q') {
 		return 0;
@@ -1074,6 +1075,7 @@ detail_handle_key(int c)
 					break;
 				}
 			}
+			expanded = 1;
 		}
 		/* fallthrough */
 	case 14:	/* ^N */
@@ -1084,6 +1086,8 @@ detail_handle_key(int c)
 			curr_trans->selected = 0;
 			curr_trans = l->next->data;
 			curr_trans->selected = 1;
+			if (expanded)
+				expand_transaction();
 			redraw_screen();
 		} else {
 			l = list_find(curr_acct->transactions, curr_trans);
@@ -1093,6 +1097,8 @@ detail_handle_key(int c)
 				curr_trans->selected = 0;
 				curr_trans = l->next->data;
 				curr_trans->selected = 1;
+				if (expanded)
+					expand_transaction();
 				redraw_screen();
 			}
 		}
@@ -1123,6 +1129,7 @@ detail_handle_key(int c)
 			assert(l);
 			if (!l->prev)
 				break;
+			expanded = 1;
 		}
 		/* fallthrough */
 	case 16:	/* ^P */
@@ -1132,6 +1139,8 @@ detail_handle_key(int c)
 			curr_trans->selected = 0;
 			curr_trans = l->prev->data;
 			curr_trans->selected = 1;
+			if (expanded)
+				expand_transaction();
 			redraw_screen();
 		} else {
 			l = list_find(curr_acct->transactions, curr_trans);
@@ -1141,6 +1150,8 @@ detail_handle_key(int c)
 				curr_trans->selected = 0;
 				curr_trans = l->prev->data;
 				curr_trans->selected = 1;
+				if (expanded)
+					expand_transaction();
 				redraw_screen();
 			}
 		}
@@ -1160,11 +1171,14 @@ detail_handle_key(int c)
 			if (curr_trans != curr_acct->transactions->data) {
 				unexpand_transaction();
 			}
+			expanded = 1;
 		}
 		curr_trans->selected = 0;
 		curr_trans = curr_acct->transactions->data;
 		curr_trans->selected = 1;
 		skip_trans = 0;
+		if (expanded)
+			expand_transaction();
 		redraw_screen();
 		break;
 	case KEY_END:
@@ -1188,9 +1202,12 @@ detail_handle_key(int c)
 				redraw_screen();
 				break;
 			}
+			expanded = 1;
 		}
 		unexpand_transaction();
 		init_trans();
+		if (expanded)
+			expand_transaction();
 		redraw_screen();
 		break;
 
