@@ -431,6 +431,8 @@ gnucash_add_transaction(void *trans)
 	data = xml_get_child(trans, "trn:splits");
 	if (data) {
 		list *splits = xml_get_children(data);
+		if (!splits)
+			bail("Transaction without splits?\n");
 		while (splits) {
 			if (strcmp(xml_name(splits->data), "trn:split"))
 				bail("non-split (%s) in splits?\n", xml_name(splits->data));

@@ -5,6 +5,8 @@ tree *
 tree_new(void *data)
 {
 	tree *t = calloc(sizeof (tree), 1);
+	if (!t)
+		return NULL;
 	t->data = data;
 	return t;
 }
