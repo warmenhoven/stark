@@ -353,6 +353,10 @@ gnucash_add_split(transaction *t, void *sp)
 	if (data && xml_get_data(data))
 		s->memo = strdup(xml_get_data(data));
 
+	data = xml_get_child(sp, "split:action");
+	if (data && xml_get_data(data))
+		s->action = strdup(xml_get_data(data));
+
 	data = xml_get_child(sp, "split:reconciled-state");
 	if (!data || !xml_get_data(data))
 		bail("Split without reconciled state?\n");
