@@ -54,6 +54,7 @@ typedef struct _acct {
 	char			*oldsrc;
 	int				has_placeholder;
 	int				has_notes;
+	char			*notes;
 	int				tax_related;
 	unsigned long	last_reconcile;
 	int				reconcile_mon;

@@ -391,6 +391,9 @@ gnucash_add_account(void *acc)
 				a->oldsrc = strdup(xml_get_data(val));
 			} else if (!strcmp(xml_get_data(key), "notes")) {
 				a->has_notes = 1;
+				if (!xml_get_data(val))
+					continue;
+				a->notes = strdup(xml_get_data(val));
 			} else if (!strcmp(xml_get_data(key), "tax-related")) {
 				a->tax_related = 1;
 			} else if (!strcmp(xml_get_data(key), "reconcile-info")) {

@@ -269,7 +269,8 @@ print_slots(FILE *f, account *a)
 	if (a->has_notes) {
 		fprintf(f, "    <slot>\n");
 		fprintf(f, "      <slot:key>notes</slot:key>\n");
-		fprintf(f, "      <slot:value type=\"string\"></slot:value>\n");
+		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
+				a->notes);
 		fprintf(f, "    </slot>\n");
 	}
 
