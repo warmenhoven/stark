@@ -66,12 +66,13 @@ endif
 # PERF and DEBUG are mutually exclusive, and PERF takes precendence
 ifneq "$(PERF)" ""
 CFLAGS += -pg -fprofile-arcs -ftest-coverage -O3
-LDLIBS += -pg
+LDFLAGS += -pg -O3
 else
 ifneq "$(DEBUG)" ""
 CFLAGS += -g3 -DDEBUG -O0
 else
 CFLAGS += -O3
+LDFLAGS += -O3 -s
 endif
 endif
 
@@ -82,7 +83,7 @@ HDRS = $(wildcard *.h)
 OBJS = $(patsubst %.c, %.o, $(SRCS))
 DEPS = $(patsubst %.c, .%.d, $(SRCS))
 
-export CC TARGET SRCS OBJS CFLAGS LDLIBS
+export CC TARGET SRCS OBJS CFLAGS LDFLAGS LDLIBS
 
 ## TARGETS
 
@@ -139,7 +140,7 @@ test: $(TARGET)
 .depend:
 	echo -e "include $(DEPS)" > $@
 	echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
-	echo -e "\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+	echo -e "\t\$$(CC) \$$(LDFLAGS) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
 
 depend: $(DEPS) .depend
 
