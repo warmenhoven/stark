@@ -4,7 +4,6 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
 #endif
-#include <ansidecl.h>
 #include <expat.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -14,7 +13,6 @@
 #include "xml.h"
 
 static XML_Parser parser;
-static void *curr = NULL;
 
 list *commodities = NULL;
 list *accounts = NULL;
@@ -514,40 +512,40 @@ gnucash_process(void *top)
 }
 
 static void
-gnucash_start(void *data ATTRIBUTE_UNUSED, const char *el, const char **attr)
+gnucash_start(void *data, const char *el, const char **attr)
 {
 	int i;
 
-	if (curr)
-		curr = xml_child(curr, el);
+	if (*(void **)data)
+		*(void **)data = xml_child(*(void **)data, el);
 	else
-		curr = xml_new(el);
+		*(void **)data = xml_new(el);
 
 	for (i = 0; attr[i]; i +=2 )
-		xml_attrib(curr, attr[i], attr[i + 1]);
+		xml_attrib(*(void **)data, attr[i], attr[i + 1]);
 }
 
 static void
-gnucash_end(void *data ATTRIBUTE_UNUSED, const char *el)
+gnucash_end(void *data, const char *el)
 {
 	void *parent;
 
-	if (!curr)
+	if (!*(void **)data)
 		return;
 
-	if (!(parent = xml_parent(curr))) {
-		gnucash_process(curr);
-		xml_free(curr);
-		curr = NULL;
-	} else if (!strcmp(xml_name(curr), el)) {
-		curr = parent;
+	if (!(parent = xml_parent(*(void **)data))) {
+		gnucash_process(*(void **)data);
+		xml_free(*(void **)data);
+		*(void **)data = NULL;
+	} else if (!strcmp(xml_name(*(void **)data), el)) {
+		*(void **)data = parent;
 	}
 }
 
 static void
-gnucash_chardata(void *data ATTRIBUTE_UNUSED, const char *s, int len)
+gnucash_chardata(void *data, const char *s, int len)
 {
-	xml_data(curr, s, len);
+	xml_data(*(void **)data, s, len);
 }
 
 void
@@ -555,10 +553,12 @@ gnucash_init(char *filename)
 {
 	FILE *f = NULL;
 	char line[4096];
+	void *curr = NULL;
 
 	if (!(parser = XML_ParserCreate(NULL)))
 		bail("Unable to create parser\n");
 
+	XML_SetUserData(parser, &curr);
 	XML_SetElementHandler(parser, gnucash_start, gnucash_end);
 	XML_SetCharacterDataHandler(parser, gnucash_chardata);
 
