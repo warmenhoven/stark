@@ -61,6 +61,32 @@ list_append(list *l, void *data)
 }
 
 list *
+list_find_sorted(list *l, void *data, cmpfunc func)
+{
+	int len, base = 0;
+
+	len = list_length(l);
+	while (len) {
+		list *s;
+		int ret;
+
+		len = (len + 1) / 2;
+		s = list_nth(l, base + len - 1);
+
+		ret = func(s->data, data);
+		if (!ret)
+			return s;
+
+		if (ret < 0) {
+			/* a < guid, bump base */
+			base += len;
+		}
+	}
+
+	return NULL;
+}
+
+list *
 list_insert_sorted(list *l, void *data, cmpfunc func)
 {
 	list *s = l, *t;

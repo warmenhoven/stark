@@ -229,28 +229,14 @@ gnucash_acct_cmp(const void *one, const void *two)
 account *
 find_account(char *guid)
 {
-	int len, base = 0;
+	account a;
+	list *l;
 
-	len = list_length(acct_list);
-	while (len) {
-		account *a;
-		list *l;
-		int ret;
+	a.id = guid;
 
-		len = (len + 1) / 2;
-		l = list_nth(acct_list, base + len - 1);
-
-		a = l->data;
-		ret = strcmp(a->id, guid);
-		if (!ret)
-			return a;
-
-		if (ret < 0) {
-			/* a < guid, bump base */
-			base += len;
-		}
-	}
-
+	l = list_find_sorted(acct_list, &a, gnucash_acct_cmp);
+	if (l)
+		return l->data;
 	return NULL;
 }
 
