@@ -924,8 +924,14 @@ detail_handle_key(int c)
 	switch (c) {
 	case 'q':
 		display_mode = ACCT_LIST;
-		if (curr_trans)
+		if (curr_trans && curr_trans->expanded) {
 			curr_trans->expanded = 0;
+			if (curr_trans->selected)
+				curr_trans->selected = 0;
+			else
+				for (l = curr_trans->splits; l; l = l->next)
+					((split *)l->data)->selected = 0;
+		}
 
 		a = curr_acct;
 		while ((a = a->parent) != NULL)
