@@ -13,8 +13,6 @@
 #include "tree.h"
 #include "xml.h"
 
-static XML_Parser parser;
-
 static void *curr = NULL;
 
 list *commodities = NULL;
@@ -123,8 +121,6 @@ gnucash_add_commodity(void *com)
 	if (!data || !xml_get_data(data))
 		bail("Commodity without fraction?\n");
 	c->fraction = strtol(xml_get_data(data), NULL, 0);
-
-	/* there's also a fraction element but we don't care */
 
 	commodities = list_append(commodities, c);
 }
@@ -415,7 +411,6 @@ gnucash_add_account(void *acc)
 			}
 		}
 	}
-	/* we should probably handle other things as well... */
 }
 
 static int
@@ -675,7 +670,7 @@ gnucash_start(void *data __attribute__((__unused__)),
 	else
 		curr = xml_new(el);
 
-	for (i = 0; attr[i]; i +=2 )
+	for (i = 0; attr[i]; i += 2)
 		xml_attrib(curr, attr[i], attr[i + 1]);
 }
 
@@ -775,6 +770,7 @@ free_all(void)
 void
 gnucash_init(char *filename)
 {
+	XML_Parser parser;
 	FILE *f = NULL;
 	char line[4096];
 
