@@ -36,9 +36,68 @@ build_expd_accts(list *accts, list **l)
 	return i;
 }
 
-static float
-get_value(account *a)
+void
+value_add(value *a, value *b)
 {
+	if (a->sig > b->sig) {
+		value tmp;
+		tmp.val = b->val;
+		tmp.sig = b->sig;
+		while (tmp.sig < a->sig) {
+			tmp.val *= 10;
+			tmp.sig++;
+		}
+		a->val += tmp.val;
+	} else {
+		while (a->sig < b->sig) {
+			a->val *= 10;
+			a->sig++;
+		}
+		a->val += b->val;
+	}
+}
+
+void
+value_multiply(value *r, value *a, value *b)
+{
+	value tmp;
+	tmp.val = a->val;
+	tmp.sig = a->sig;
+	while (tmp.sig && (tmp.val % 10) == 0) {
+		tmp.val /= 10;
+		tmp.sig--;
+	}
+	r->val = b->val;
+	r->sig = b->sig;
+	while (r->sig && (r->val % 10) == 0) {
+		r->val /= 10;
+		r->sig--;
+	}
+	r->val *= tmp.val;
+	r->sig += tmp.sig;
+}
+
+static void
+get_value(account *a, value *total)
+{
+	list *l = a->subs;
+	value curr;
+
+	curr.val = 0;
+	curr.sig = 0;
+
+	if (a->commodity && a->commodity->quote)
+		value_multiply(&curr, &a->quantity, &a->commodity->quote->value);
+	else if (!a->commodity)
+		value_add(&curr, &a->quantity);
+
+	while (l) {
+		get_value(l->data, &curr);
+		l = l->next;
+	}
+
+	value_add(total, &curr);
+#if 0
 	float total = 0;
 	list *l = a->subs;
 
@@ -53,16 +112,28 @@ get_value(account *a)
 	}
 
 	return total;
+#endif
+}
+
+static float
+value_to_float(value *v)
+{
+	float ret = v->val;
+	int s = v->sig;
+	while (s--)
+		ret /= 10;
+	return ret;
 }
 
 static void
 draw_acct(account *a, int line)
 {
 	account *dfind = a;
-	char value[1024];
+	char valstr[1024];
 	int sibling = 0;
 	int depth = 0;
 	int dlen = 0;
+	value total;
 	int i;
 
 	move(line, 0);
@@ -128,7 +199,8 @@ draw_acct(account *a, int line)
 
 	if (a->commodity) {
 		char quant[1024];
-		dlen += sprintf(quant, "%.3f %s", a->quantity, a->commodity->id);
+		dlen += sprintf(quant, "%.3f %s", value_to_float(&a->quantity),
+						a->commodity->id);
 		addstr(quant);
 	}
 
@@ -138,10 +210,13 @@ draw_acct(account *a, int line)
 	addch('$');
 	dlen++;
 
-	dlen += sprintf(value, "%.2f", get_value(a));
+	total.val = 0;
+	total.sig = 0;
+	get_value(a, &total);
+	dlen += sprintf(valstr, "%.2f", value_to_float(&total));
 	for (; dlen < 80; dlen++)
 		addch(' ');
-	addstr(value);
+	addstr(valstr);
 
 	/* can't use clrtoeol() because we want A_REVERSE to eol */
 	for (; dlen < COLS; dlen++)
@@ -234,8 +309,11 @@ draw_trans_header(void)
 static float
 trans_balance(transaction *t, account *a)
 {
-	float balance = 0;
+	value balance;
 	list *l = t->splits;
+
+	balance.val = 0;
+	balance.sig = 0;
 
 	while (l) {
 		split *s = l->data;
@@ -244,10 +322,10 @@ trans_balance(transaction *t, account *a)
 		if (strcmp(s->account, a->id))
 			continue;
 
-		balance += s->quantity;
+		value_add(&balance, &s->quantity);
 	}
 
-	return balance;
+	return value_to_float(&balance);
 }
 
 static void
@@ -354,11 +432,11 @@ draw_split(split *s, int line)
 	mvaddch(line, 69, s->recstate);
 	mvaddstr(line, 70, "   ");
 
-	if (s->quantity > 0)
-		sprintf(tmpstr, "$%.02f", s->quantity);
+	if (s->quantity.val > 0)
+		sprintf(tmpstr, "$%.02f", value_to_float(&s->quantity));
 	else
-		sprintf(tmpstr, "$%.02f", 0 - s->quantity);
-	if (s->quantity > 0) {
+		sprintf(tmpstr, "$%.02f", 0 - value_to_float(&s->quantity));
+	if (s->quantity.val > 0) {
 		mvaddstr(line, 73, tmpstr);
 		for (i = 84; i < 96; i++)
 			mvaddch(line, i, ' ');

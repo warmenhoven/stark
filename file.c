@@ -4,6 +4,15 @@
 #include <time.h>
 #include "main.h"
 
+static unsigned long
+power_ten(unsigned long y)
+{
+	unsigned long ret = 1;
+	while (y--)
+		ret *= 10;
+	return ret;
+}
+
 static void
 write_header(FILE *f)
 {
@@ -168,8 +177,8 @@ write_price(FILE *f, commodity *c)
 	fprintf(f, "    </price:time>\n");
 	fprintf(f, "    <price:source>Finance::Quote</price:source>\n");
 	fprintf(f, "    <price:type>last</price:type>\n");
-	fprintf(f, "    <price:value>%d/10000000</price:value>\n",
-			(int)((c->quote->value + 0.009) * 100) * 100000);
+	fprintf(f, "    <price:value>%lld/%lu</price:value>\n",
+			c->quote->value.val, power_ten(c->quote->value.sig));
 	fprintf(f, "  </price>\n");
 }
 
@@ -272,7 +281,6 @@ static void
 write_split(FILE *f, split *s)
 {
 	account *a = find_account(s->account);
-	float val;
 	if (!a)
 		return;
 	fprintf(f, "    <trn:split>\n");
@@ -291,17 +299,10 @@ write_split(FILE *f, split *s)
 			fprintf(f, "        <ts:ns>%ld</ts:ns>\n", s->ns);
 		fprintf(f, "      </split:reconcile-date>\n");
 	}
-	if (s->value > 0)
-		val = (s->value + .9/100) * 100;
-	else
-		val = (s->value - .9/100) * 100;
-	fprintf(f, "      <split:value>%d/100</split:value>\n", (int)val);
-	if (s->value > 0)
-		val = (s->quantity + .9/a->scu) * a->scu;
-	else
-		val = (s->quantity - .9/a->scu) * a->scu;
-	fprintf(f, "      <split:quantity>%d/%d</split:quantity>\n",
-			(int)val, a->scu);
+	fprintf(f, "      <split:value>%lld/%lu</split:value>\n",
+			s->value.val, power_ten(s->value.sig));
+	fprintf(f, "      <split:quantity>%lld/%lu</split:quantity>\n",
+			s->quantity.val, power_ten(s->quantity.sig));
 	fprintf(f, "      <split:account type=\"guid\">%s</split:account>\n",
 			s->account);
 	fprintf(f, "    </trn:split>\n");

@@ -1,11 +1,17 @@
+#include <stdint.h>
 #include <time.h>
 #include "list.h"
+
+typedef struct {
+	int64_t			val;
+	unsigned long	sig;
+} value;
 
 typedef struct {
 	char	*id;
 	time_t	time;
 	long	ns;
-	float	value;
+	value	value;
 } price;
 
 typedef struct {
@@ -37,7 +43,7 @@ typedef struct _acct {
 	char			*description;
 	char			*id;
 	act_type		type;
-	float			quantity;
+	value			quantity;
 	commodity		*commodity;
 	list			*transactions;
 	int				placeholder;
@@ -50,19 +56,19 @@ typedef struct _acct {
 
 typedef struct {
 	/* data */
-	char	*id;
-	char	*account;
-	char	*memo;
-	time_t	recdate;
-	long	ns;
-	float	value;
-	float	quantity;
-	char	*action;
-	char	recstate;
-	char	pad[3];
+	char		*id;
+	char		*account;
+	char		*memo;
+	time_t		recdate;
+	long		ns;
+	value		value;
+	value		quantity;
+	char		*action;
+	char		recstate;
+	char		pad[3];
 
 	/* display */
-	int		selected;
+	int			selected;
 } split;
 
 typedef struct {
@@ -86,6 +92,9 @@ extern list *accounts;
 extern char *book_guid;
 
 extern account *find_account(char *);
+
+extern void value_add(value *, value *);
+extern void value_multiply(value *, value *, value *);
 
 extern void gnucash_init(char *);
 

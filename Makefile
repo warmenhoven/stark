@@ -21,7 +21,7 @@ NITPICKY_WARNINGS = -Werror \
 		    -Wredundant-decls \
 		    -Wnested-externs \
 		    -Winline \
-		    -ansi \
+		    -std=c99 \
 		    -pedantic
 
 CFLAGS += $(NITPICKY_WARNINGS)

@@ -65,15 +65,13 @@ gnucash_get_time(void *data)
 	return ret;
 }
 
-static float
-gnucash_get_value(char *v)
+static void
+gnucash_get_value(char *s, value *v)
 {
-	long n, d;
-	n = strtol(v, NULL, 0);
-	v = strchr(v, '/');
-	v++;
-	d = strtoul(v, NULL, 0);
-	return ((float)n/(float)d);
+	v->val = strtol(s, NULL, 0);
+	s = strchr(s, '/');
+	s++;
+	v->sig = strlen(s) - 1;
 }
 
 static commodity *
@@ -173,7 +171,7 @@ gnucash_add_price(void *pr)
 		p->ns = strtol(xml_get_data(data), NULL, 0);
 
 	data = xml_get_child(pr, "price:value");
-	p->value = gnucash_get_value(xml_get_data(data));
+	gnucash_get_value(xml_get_data(data), &p->value);
 
 	data = xml_get_child(pr, "price:id");
 	p->id = strdup(xml_get_data(data));
@@ -307,42 +305,20 @@ gnucash_add_account(void *acc)
 	if (data) {
 		list *l = xml_get_children(data);
 		while (l) {
-			void *key, *value;
+			void *key, *val;
 			data = l->data;
 			l = l->next;
 			key = xml_get_child(data, "slot:key");
-			value = xml_get_child(data, "slot:value");
-			if (!key || !xml_get_data(key) || !value || !xml_get_data(value))
+			val = xml_get_child(data, "slot:value");
+			if (!key || !xml_get_data(key) || !val || !xml_get_data(val))
 				continue;
 			if (strcmp(xml_get_data(key), "placeholder"))
 				continue;
-			if (!strcmp(xml_get_data(value), "true"))
+			if (!strcmp(xml_get_data(val), "true"))
 				a->placeholder = 1;
 		}
 	}
 	/* we should probably handle other things as well... */
-}
-
-static void
-gnucash_print_accounts(list *l, char *prefix)
-{
-	while (l) {
-		char newprefix[256];
-		account *a = l->data;
-		l = l->next;
-
-		printf("%s-%s", prefix, a->name);
-		if (a->commodity)
-			printf(" (%s)", a->commodity->name);
-		else
-			printf(" (USD)");
-		printf(" (%u transactions)", list_length(a->transactions));
-		printf(" (%.03f %s)", a->quantity,
-				a->commodity ? a->commodity->id : "USD");
-		printf("\n");
-		snprintf(newprefix, sizeof(newprefix), "%s |", prefix);
-		gnucash_print_accounts(a->subs, newprefix);
-	}
 }
 
 static int
@@ -400,12 +376,12 @@ gnucash_add_split(transaction *t, void *sp)
 	data = xml_get_child(sp, "split:value");
 	if (!data || !xml_get_data(data))
 		bail("Split without reconciled value?\n");
-	s->value = gnucash_get_value(xml_get_data(data));
+	gnucash_get_value(xml_get_data(data), &s->value);
 
 	data = xml_get_child(sp, "split:quantity");
 	if (!data || !xml_get_data(data))
 		bail("Split without reconciled quantity?\n");
-	s->quantity = gnucash_get_value(xml_get_data(data));
+	gnucash_get_value(xml_get_data(data), &s->quantity);
 
 	data = xml_get_child(sp, "split:account");
 	if (data && xml_get_data(data)) {
@@ -415,7 +391,7 @@ gnucash_add_split(transaction *t, void *sp)
 		if (!list_find(a->transactions, t)) {
 			a->transactions =
 				list_insert_sorted(a->transactions, t, gnucash_trans_cmp);
-			a->quantity += s->quantity;
+			value_add(&a->quantity, &s->quantity);
 		}
 		s->account = strdup(xml_get_data(data));
 	} else {
