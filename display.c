@@ -850,11 +850,11 @@ expand_transaction(void)
 	curr_trans->expanded = 1;
 }
 
-static __inline__ void
+static void
 unexpand_transaction(void)
 {
 	int len;
-	list *l;
+	list *l, *s;
 	if (!curr_trans->expanded)
 		return;
 	len = list_length(disp_trans);
@@ -863,6 +863,16 @@ unexpand_transaction(void)
 	move(3 + len - list_length(l), 0);
 	clrtobot();
 	curr_trans->expanded = 0;
+
+	s = curr_trans->splits;
+	l = list_find(curr_acct->transactions, curr_trans);
+	assert(l);
+	l = l->next;
+	while (s && l) {
+		disp_trans = list_append(disp_trans, l->data);
+		s = s->next;
+		l = l->next;
+	}
 }
 
 static void
