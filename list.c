@@ -60,27 +60,21 @@ list_append(list *l, void *data)
 	return l;
 }
 
+/* _sorted routines are misnamed; they're actually binary trees */
 list *
 list_find_sorted(list *l, void *data, cmpfunc func)
 {
-	int len, base = 0;
+	list *s = l;
 
-	len = list_length(l);
-	while (len) {
-		list *s;
-		int ret;
+	while (s) {
+		int ret = func(s->data, data);
 
-		len = (len + 1) / 2;
-		s = list_nth(l, base + len - 1);
-
-		ret = func(s->data, data);
 		if (!ret)
 			return s;
-
-		if (ret < 0) {
-			/* a < guid, bump base */
-			base += len;
-		}
+		else if (ret < 0)
+			s = s->prev;
+		else
+			s = s->next;
 	}
 
 	return NULL;
@@ -89,22 +83,38 @@ list_find_sorted(list *l, void *data, cmpfunc func)
 list *
 list_insert_sorted(list *l, void *data, cmpfunc func)
 {
-	list *s = l, *t;
+	list *s = l;
 
-	/* search for the one it should go before */
-	while (s && func(data, s->data) > 0) s = s->next;
-
-	if (!s)
+	if (!l)
 		return list_append(l, data);
 
-	if (!s->prev)
-		return list_prepend(l, data);
+	while (s) {
+		int ret = func(s->data, data);
 
-	t = s->prev;
-	t->next = list_new(data);
-	t->next->prev = t;
-	t->next->next = s;
-	s->prev = t->next;
+		if (!ret) {
+			if (!s->prev) {
+				s->prev = list_new(data);
+				break;
+			}
+			if (!s->next) {
+				s->next = list_new(data);
+				break;
+			}
+			s = s->prev;
+		} else if (ret < 0) {
+			if (!s->prev) {
+				s->prev = list_new(data);
+				break;
+			}
+			s = s->prev;
+		} else {
+			if (!s->next) {
+				s->next = list_new(data);
+				break;
+			}
+			s = s->next;
+		}
+	}
 
 	return l;
 }
