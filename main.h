@@ -68,19 +68,19 @@ typedef struct _acct {
 
 typedef struct {
 	/* data */
-	char		*id;
-	char		*account;
-	char		*memo;
-	time_t		recdate;
-	long		ns;
-	value		value;
-	value		quantity;
-	char		*action;
-	char		recstate;
-	char		pad[3];
+	char			*id;
+	char			*account;
+	char			*memo;
+	time_t			recdate;
+	long			ns;
+	value			value;
+	value			quantity;
+	char			*action;
+	unsigned char	recstate;
+	char			pad[3];
 
 	/* display */
-	int			selected;
+	int				selected;
 } split;
 
 typedef struct {

@@ -105,10 +105,10 @@ get_value(account *a, value *total)
 	value_add(total, &curr);
 }
 
-static float
-value_to_float(value *v)
+static double
+value_to_double(value *v)
 {
-	float ret = v->val;
+	double ret = v->val;
 	int s = v->sig;
 	while (s--)
 		ret /= 10;
@@ -189,7 +189,7 @@ draw_acct(account *a, int line)
 
 	if (a->commodity) {
 		char quant[1024];
-		dlen += sprintf(quant, "%.3f %s", value_to_float(&a->quantity),
+		dlen += sprintf(quant, "%.3f %s", value_to_double(&a->quantity),
 						a->commodity->id);
 		addstr(quant);
 	}
@@ -203,7 +203,7 @@ draw_acct(account *a, int line)
 	total.val = 0;
 	total.sig = 0;
 	get_value(a, &total);
-	dlen += sprintf(valstr, "%.2f", value_to_float(&total));
+	dlen += sprintf(valstr, "%.2f", value_to_double(&total));
 	for (; dlen < 80; dlen++)
 		addch(' ');
 	addstr(valstr);
@@ -296,7 +296,7 @@ draw_trans_header(void)
 		addch(ACS_HLINE);
 }
 
-static float
+static double
 trans_balance(transaction *t, account *a)
 {
 	value balance;
@@ -315,13 +315,13 @@ trans_balance(transaction *t, account *a)
 		value_add(&balance, &s->quantity);
 	}
 
-	return value_to_float(&balance);
+	return value_to_double(&balance);
 }
 
 static void
-draw_trans(transaction *t, int line, float total)
+draw_trans(transaction *t, int line, double total)
 {
-	float balance = 0;
+	double balance = 0;
 	char tmpstr[11];
 	int i;
 
@@ -423,9 +423,9 @@ draw_split(split *s, int line)
 	mvaddstr(line, 70, "   ");
 
 	if (s->quantity.val > 0)
-		sprintf(tmpstr, "$%.02f", value_to_float(&s->quantity));
+		sprintf(tmpstr, "$%.02f", value_to_double(&s->quantity));
 	else
-		sprintf(tmpstr, "$%.02f", 0 - value_to_float(&s->quantity));
+		sprintf(tmpstr, "$%.02f", 0 - value_to_double(&s->quantity));
 	if (s->quantity.val > 0) {
 		mvaddstr(line, 73, tmpstr);
 		for (i = 84; i < 96; i++)
@@ -446,7 +446,7 @@ draw_transactions(void)
 {
 	list *l = curr_acct->transactions;
 	int i = skip_trans;
-	float balance = 0;
+	double balance = 0;
 	int line = 3;
 
 	list_free(disp_trans);
