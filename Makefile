@@ -49,7 +49,7 @@ TARGET = stark
 
 SRCS = $(wildcard *.c)
 HDRS = $(wildcard *.h)
-OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
+OBJS = $(patsubst %.c, %.o, $(SRCS))
 
 export CC TARGET SRCS OBJS CFLAGS LDLIBS
 
@@ -64,7 +64,11 @@ $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
 
 clean:
-	rm -rf .depend $(TARGET) $(TARGET).1 $(TARGET).tgz *.bb *.bbg *.da *.gcov *.o core gmon.out
+	rm -rf .depend \
+		*.o $(TARGET) $(TARGET).1 \
+		$(TARGET).tgz \
+		*.bb *.bbg *.da *.gcov \
+		core gmon.out
 
 dist:
 	rm -f $(TARGET).tgz
@@ -82,9 +86,9 @@ install: $(TARGET) $(TARGET).1
 test: $(TARGET)
 	./$(TARGET) gcd
 
-# rebuilding every .depend every time any .c or .h changes is probably bad, we could fix that
+# rebuilding every .depend every time any .c or .h changes is probably bad
 .depend: $(SRCS) $(HDRS)
-	@$(CC) -MM $(CFLAGS) $(SRCS) > $@
+	$(CC) -MM $(CFLAGS) $(SRCS) > $@
 	@echo -e "\n\$$(TARGET): \$$(OBJS)\n\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
 
 depend: .depend
