@@ -1,11 +1,11 @@
-.TH STARK 1 "2004 Oct 14"
+.TH @PROGNAME@ 1 "2004 Oct 14"
 .SH NAME
-stark \- displays financial data
+@PROGNAME@ \- displays financial data
 .SH SYNOPSIS
-stark <data-file>
+@PROGNAME@ <data-file>
 .SH USAGE
-stark displays the financial data contained in the supplied <data-file>. The
-data file must have been created by GnuCash; stark will tell you if there are
+@PROGNAME@ displays the financial data contained in the supplied <data-file>. The
+data file must have been created by GnuCash; @PROGNAME@ will tell you if there are
 any problems with the file.
 
 Keys are similar to both vi (j, k) and emacs (C-N, C-P). Hitting Enter on an

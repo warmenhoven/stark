@@ -47,10 +47,13 @@ OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
 
+$(TARGET).1: manpage.1.in
+	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
+
 clean:
 	rm -rf $(TARGET) *.bb *.bbg *.da *.gcov *.o core gmon.out $(TARGET).tgz
 
-dist:
+dist: $(TARGET).1
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
 	cp Makefile README $(TARGET).1 *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
