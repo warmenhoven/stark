@@ -74,19 +74,19 @@ dist:
 	rm -rf tmp
 
 install: $(TARGET) $(TARGET).1
-	-mkdir -p $(DESTDIR)/$(PREFIX)/$(BINDIR)
-	-$(INSTALL) $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)
-	-mkdir -p $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
-	-$(INSTALL) -m 644 $(TARGET).1 $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
+	@-mkdir -p $(DESTDIR)/$(PREFIX)/$(BINDIR)
+	$(INSTALL) $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)
+	@-mkdir -p $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
+	$(INSTALL) -m 644 $(TARGET).1 $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
 
 test: $(TARGET)
 	./$(TARGET) gcd
 
 # rebuilding every .depend every time any .c or .h changes is probably bad, we could fix that
 .depend: $(SRCS) $(HDRS)
-	@gcc -MM $(SRCS) > $@
+	@$(CC) -MM $(CFLAGS) $(SRCS) > $@
 	@echo -e "\n\$$(TARGET): \$$(OBJS)\n\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
 
-.PHONY: depend
-
 depend: .depend
+
+.PHONY: depend clean dist install
