@@ -45,7 +45,7 @@ clean:
 dist:
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)
-	cp Makefile *.[ch] tmp/$(TARGET)
+	cp Makefile README *.[ch] tmp/$(TARGET)
 	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)
 	rm -rf tmp
 
