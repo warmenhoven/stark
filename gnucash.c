@@ -4,7 +4,6 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
 #endif
-#include <ansidecl.h>
 #include <expat.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -24,7 +23,9 @@ char *book_guid = NULL;
 
 static tree *acct_tree = NULL;
 
-static void ATTRIBUTE_PRINTF_1 ATTRIBUTE_NORETURN
+static void
+__attribute__((__format__(__printf__, 1, 2)))
+__attribute__((__noreturn__))
 bail(const char *f, ...)
 {
 	va_list ap;
@@ -648,7 +649,8 @@ gnucash_process(void *top)
 }
 
 static void
-gnucash_start(void *data ATTRIBUTE_UNUSED, const char *el, const char **attr)
+gnucash_start(void *data __attribute__((__unused__)),
+			  const char *el, const char **attr)
 {
 	int i;
 
@@ -662,7 +664,7 @@ gnucash_start(void *data ATTRIBUTE_UNUSED, const char *el, const char **attr)
 }
 
 static void
-gnucash_end(void *data ATTRIBUTE_UNUSED, const char *el)
+gnucash_end(void *data __attribute__((__unused__)), const char *el)
 {
 	void *parent;
 
@@ -679,7 +681,8 @@ gnucash_end(void *data ATTRIBUTE_UNUSED, const char *el)
 }
 
 static void
-gnucash_chardata(void *data ATTRIBUTE_UNUSED, const char *s, int len)
+gnucash_chardata(void *data __attribute__((__unused__)),
+				 const char *s, int len)
 {
 	xml_data(curr, s, len);
 }
