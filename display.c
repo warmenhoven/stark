@@ -324,6 +324,8 @@ draw_trans_header(void)
 	if (display_mode != JOURNAL || journal_parent) {
 		x = full_acct_name(curr_acct);
 		mvaddstr(2, 0, x);
+		if (display_mode == JOURNAL)
+			mvaddstr(2, strlen(x) + 1, "and sub-accounts");
 		free(x);
 	} else {
 		mvaddstr(2, 0, "General Ledger");
