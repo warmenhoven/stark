@@ -27,6 +27,7 @@ typedef enum {
 } act_type;
 
 typedef struct _acct {
+	/* data */
 	struct _acct	*parent;
 	list			*subs;
 	char			*name;
@@ -36,6 +37,10 @@ typedef struct _acct {
 	float			quantity;
 	commodity		*commodity;
 	list			*transactions;
+
+	/* display */
+	int				expanded;
+	int				selected;
 } account;
 
 typedef struct {
@@ -61,8 +66,6 @@ extern list *transactions;
 
 extern void gnucash_init(char *);
 
-extern void display_init();
 extern void display_run();
-extern void display_end();
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */

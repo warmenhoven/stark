@@ -24,8 +24,6 @@ bail(char *f, ...)
 {
 	va_list ap;
 
-	display_end();
-
 	va_start(ap, f);
 	vfprintf(stderr, f, ap);
 	va_end(ap);
