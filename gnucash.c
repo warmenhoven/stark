@@ -168,6 +168,9 @@ gnucash_add_price(void *pr)
 
 	data = xml_get_child(pr, "price:time");
 	p->time = gnucash_get_time(xml_get_child(data, "ts:date"));
+	data = xml_get_child(data, "ts:ns");
+	if (data && xml_get_data(data))
+		p->ns = strtol(xml_get_data(data), NULL, 0);
 
 	data = xml_get_child(pr, "price:value");
 	p->value = gnucash_get_value(xml_get_data(data));
@@ -270,6 +273,10 @@ gnucash_add_account(void *acc)
 	if (data && xml_get_data(data))
 		a->description = strdup(xml_get_data(data));
 
+	data = xml_get_child(acc, "act:commodity-scu");
+	if (data && xml_get_data(data))
+		a->scu = strtol(xml_get_data(data), NULL, 0);
+
 	data = xml_get_child(acc, "act:parent");
 	if (data) {
 		a->parent = find_account(xml_get_data(data));
@@ -362,6 +369,11 @@ gnucash_add_split(transaction *t, void *sp)
 
 	t->splits = list_append(t->splits, s);
 
+	data = xml_get_child(sp, "split:id");
+	if (!data || !xml_get_data(data))
+		bail("Split without guid?\n");
+	s->id = strdup(xml_get_data(data));
+
 	data = xml_get_child(sp, "split:memo");
 	if (data && xml_get_data(data))
 		s->memo = strdup(xml_get_data(data));
@@ -380,6 +392,9 @@ gnucash_add_split(transaction *t, void *sp)
 		if (!xml_get_child(data, "ts:date"))
 			bail("reconcile-date without date?\n");
 		s->recdate = gnucash_get_time(xml_get_child(data, "ts:date"));
+		data = xml_get_child(data, "ts:ns");
+		if (data && xml_get_data(data))
+			s->ns = strtol(xml_get_data(data), NULL, 0);
 	}
 
 	data = xml_get_child(sp, "split:value");
@@ -433,6 +448,9 @@ gnucash_add_transaction(void *trans)
 	if (!xml_get_child(data, "ts:date"))
 		bail("Date-Posted (%s) without date?\n", t->id);
 	t->posted = gnucash_get_time(xml_get_child(data, "ts:date"));
+	data = xml_get_child(data, "ts:ns");
+	if (data && xml_get_data(data))
+		t->pns = strtol(xml_get_data(data), NULL, 0);
 
 	data = xml_get_child(trans, "trn:date-entered");
 	if (!data || !xml_get_data(data))
@@ -440,6 +458,9 @@ gnucash_add_transaction(void *trans)
 	if (!xml_get_child(data, "ts:date"))
 		bail("Date-Entered (%s) without date?\n", t->id);
 	t->entered = gnucash_get_time(xml_get_child(data, "ts:date"));
+	data = xml_get_child(data, "ts:ns");
+	if (data && xml_get_data(data))
+		t->ens = strtol(xml_get_data(data), NULL, 0);
 
 	data = xml_get_child(trans, "trn:description");
 	if (data && xml_get_data(data))

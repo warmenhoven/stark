@@ -46,20 +46,16 @@ build_trans_list(list *l, list **t)
 }
 
 static void
-write_counts(FILE *f)
+write_counts(FILE *f, int trans_count)
 {
-	list *l = NULL;
-
 	fprintf(f, "<gnc:count-data cd:type=\"commodity\">%d</gnc:count-data>\n",
 			list_length(commodities));
 
 	fprintf(f, "<gnc:count-data cd:type=\"account\">%d</gnc:count-data>\n",
 			1 + num_accounts(accounts));
 
-	build_trans_list(accounts, &l);
 	fprintf(f, "<gnc:count-data cd:type=\"transaction\">%d</gnc:count-data>\n",
-			list_length(l));
-	list_free(l);
+			trans_count);
 }
 
 static char *
@@ -129,12 +125,28 @@ write_commodities(FILE *f)
 }
 
 static void
-write_price(FILE *f, commodity *c)
+print_date(FILE *f, time_t t)
 {
 	char tmstr[64];
 	struct tm *stm;
 	time_t tz;
 
+	tz = t + __timezone;
+	stm = localtime(&tz);
+	tz = t + __timezone - (stm->tm_isdst ? 3600 : 0);
+	stm = localtime(&tz);
+	tz -= t;
+	strftime(tmstr, sizeof (tmstr), "%Y-%m-%d %H:%M:%S", stm);
+
+	fprintf(f, "<ts:date>%s %c%02ld%02ld</ts:date>\n", tmstr,
+			tz > 0 ? '-' : '+',
+			tz > 0 ? tz / 3600 : -tz / 3600,
+			tz > 0 ? (tz / 60) % 60 : (-tz / 60) % 60);
+}
+
+static void
+write_price(FILE *f, commodity *c)
+{
 	fprintf(f, "  <price>\n");
 	fprintf(f, "    <price:id type=\"guid\">%s</price:id>\n", c->quote->id);
 	fprintf(f, "    <price:commodity>\n");
@@ -146,14 +158,9 @@ write_price(FILE *f, commodity *c)
 	fprintf(f, "      <cmdty:id>USD</cmdty:id>\n");
 	fprintf(f, "    </price:currency>\n");
 	fprintf(f, "    <price:time>\n");
-	tz = c->quote->time + __timezone - (stm->tm_isdst ? 3600 : 0);
-	stm = localtime(&tz);
-	tz -= c->quote->time;
-	strftime(tmstr, sizeof (tmstr), "%Y-%m-%d %H:%M:%S", stm);
-	fprintf(f, "      <ts:date>%s %c%02ld%02ld</ts:date>\n", tmstr,
-			tz > 0 ? '-' : '+',
-			tz > 0 ? tz / 3600 : -tz / 3600,
-			tz > 0 ? (tz / 60) % 60 : (-tz / 60) % 60);
+	fprintf(f, "      "); print_date(f, c->quote->time);
+	if (c->quote->ns)
+		fprintf(f, "      <ts:ns>%ld</ts:ns>\n", c->quote->ns);
 	fprintf(f, "    </price:time>\n");
 	fprintf(f, "    <price:source>Finance::Quote</price:source>\n");
 	fprintf(f, "    <price:type>last</price:type>\n");
@@ -208,6 +215,7 @@ account_type_string(act_type t)
 	return NULL;
 }
 
+/* XXX this isn't right at all yet */
 static void
 write_accounts(FILE *f, list *l)
 {
@@ -232,7 +240,7 @@ write_accounts(FILE *f, list *l)
 			fprintf(f, "    <cmdty:id>USD</cmdty:id>\n");
 			fprintf(f, "  </act:commodity>\n");
 		}
-		fprintf(f, "  <act:commodity-scu>100</act:commodity-scu>\n");
+		fprintf(f, "  <act:commodity-scu>%d</act:commodity-scu>\n", a->scu);
 		if (a->description)
 			fprintf(f, "  <act:description>%s</act:description>\n",
 					xml_str(a->description));
@@ -256,20 +264,115 @@ write_accounts(FILE *f, list *l)
 	}
 }
 
+static void
+write_split(FILE *f, split *s)
+{
+	account *a = find_account(s->account);
+	float val;
+	if (!a)
+		return;
+	fprintf(f, "    <trn:split>\n");
+	fprintf(f, "      <split:id type=\"guid\">%s</split:id>\n", s->id);
+	if (s->memo)
+		fprintf(f, "      <split:memo>%s</split:memo>\n", xml_str(s->memo));
+	if (s->action)
+		fprintf(f, "      <split:action>%s</split:action>\n",
+				xml_str(s->action));
+	fprintf(f, "      <split:reconciled-state>%c</split:reconciled-state>\n",
+			s->recstate);
+	if (s->recdate) {
+		fprintf(f, "      <split:reconcile-date>\n");
+		fprintf(f, "        "); print_date(f, s->recdate);
+		if (s->ns)
+			fprintf(f, "        <ts:ns>%ld</ts:ns>\n", s->ns);
+		fprintf(f, "      </split:reconcile-date>\n");
+	}
+	if (s->value > 0)
+		val = (s->value + .9/100) * 100;
+	else
+		val = (s->value - .9/100) * 100;
+	fprintf(f, "      <split:value>%d/100</split:value>\n", (int)val);
+	if (s->value > 0)
+		val = (s->quantity + .9/a->scu) * a->scu;
+	else
+		val = (s->quantity - .9/a->scu) * a->scu;
+	fprintf(f, "      <split:quantity>%d/%d</split:quantity>\n",
+			(int)val, a->scu);
+	fprintf(f, "      <split:account type=\"guid\">%s</split:account>\n",
+			s->account);
+	fprintf(f, "    </trn:split>\n");
+}
+
+static void
+write_transactions(FILE *f, list *l)
+{
+	while (l) {
+		transaction *t = l->data;
+		list *splits;
+		l = l->next;
+
+		fprintf(f, "<gnc:transaction version=\"2.0.0\">\n");
+		fprintf(f, "  <trn:id type=\"guid\">%s</trn:id>\n", t->id);
+		fprintf(f, "  <trn:currency>\n");
+		fprintf(f, "    <cmdty:space>ISO4217</cmdty:space>\n");
+		fprintf(f, "    <cmdty:id>USD</cmdty:id>\n");
+		fprintf(f, "  </trn:currency>\n");
+		if (t->num)
+			fprintf(f, "  <trn:num>%d</trn:num>\n", t->num);
+		fprintf(f, "  <trn:date-posted>\n");
+		fprintf(f, "    "); print_date(f, t->posted);
+		if (t->pns)
+			fprintf(f, "    <ts:ns>%ld</ts:ns>\n", t->pns);
+		fprintf(f, "  </trn:date-posted>\n");
+		fprintf(f, "  <trn:date-entered>\n");
+		fprintf(f, "    "); print_date(f, t->entered);
+		if (t->ens)
+			fprintf(f, "    <ts:ns>%ld</ts:ns>\n", t->ens);
+		fprintf(f, "  </trn:date-entered>\n");
+		fprintf(f, "  <trn:description>%s</trn:description>\n",
+				xml_str(t->description));
+		fprintf(f, "  <trn:splits>\n");
+		splits = t->splits;
+		while (splits) {
+			write_split(f, splits->data);
+			splits = splits->next;
+		}
+		fprintf(f, "  </trn:splits>\n");
+		fprintf(f, "</gnc:transaction>\n");
+	}
+}
+
+static void
+write_footer(FILE *f)
+{
+	fprintf(f, "</gnc:book>\n");
+	fprintf(f, "</gnc-v2>\n");
+	fprintf(f, "\n");
+	fprintf(f, "<!-- Local variables: -->\n");
+	fprintf(f, "<!-- mode: xml        -->\n");
+	fprintf(f, "<!-- End:             -->\n");
+}
+
 void
 write_file(const char *filename)
 {
 	FILE *f;
+	list *l = NULL;
 
 	f = fopen(filename, "w");
 	if (!f)
 		return;
 
+	build_trans_list(accounts, &l);
+
 	write_header(f);
-	write_counts(f);
+	write_counts(f, list_length(l));
 	write_commodities(f);
 	write_pricedb(f);
 	write_accounts(f, accounts);
+	write_transactions(f, l);
+	write_footer(f);
+	list_free(l);
 
 	fclose(f);
 }

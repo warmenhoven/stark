@@ -4,6 +4,7 @@
 typedef struct {
 	char	*id;
 	time_t	time;
+	long	ns;
 	float	value;
 } price;
 
@@ -40,6 +41,7 @@ typedef struct _acct {
 	commodity		*commodity;
 	list			*transactions;
 	int				placeholder;
+	int				scu;
 
 	/* display */
 	int				expanded;
@@ -48,9 +50,11 @@ typedef struct _acct {
 
 typedef struct {
 	/* data */
+	char	*id;
 	char	*account;
 	char	*memo;
 	time_t	recdate;
+	long	ns;
 	float	value;
 	float	quantity;
 	char	*action;
@@ -66,7 +70,9 @@ typedef struct {
 	char	*id;
 	int		num;
 	time_t	posted;
+	long	pns;
 	time_t	entered;
+	long	ens;
 	char	*description;
 	list	*splits;
 

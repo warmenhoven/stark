@@ -66,7 +66,7 @@ list_insert_sorted(list *l, void *data, list_cmpfunc func)
 	list *s = l, *t;
 
 	/* search for the one it should go before */
-	while (s && func(data, s->data) > 0) s = s->next;
+	while (s && func(data, s->data) >= 0) s = s->next;
 
 	if (!s)
 		return list_append(l, data);
