@@ -1,9 +1,9 @@
-.cvsignore
 *.bb
 *.bbg
+.cvsignore
 *.da
+.depend
 *.gcov
-gcd
 gmon.out
 stark
 stark.1

@@ -45,9 +45,14 @@ endif
 
 TARGET = stark
 
-all: $(TARGET) $(TARGET).1
-
+SRCS = $(wildcard *.c)
+HDRS = $(wildcard *.h)
 OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
+
+export CC TARGET SRCS OBJS CFLAGS LDLIBS
+
+all: .depend $(TARGET).1
+	@$(MAKE) -f .depend $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
@@ -56,7 +61,7 @@ $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
 
 clean:
-	rm -rf $(TARGET) $(TARGET).1 $(TARGET).tgz *.bb *.bbg *.da *.gcov *.o core gmon.out
+	rm -rf .depend $(TARGET) $(TARGET).1 $(TARGET).tgz *.bb *.bbg *.da *.gcov *.o core gmon.out
 
 dist:
 	rm -f $(TARGET).tgz
@@ -74,10 +79,6 @@ install: $(TARGET) $(TARGET).1
 test: $(TARGET)
 	./$(TARGET) gcd
 
-display.o: display.c main.h list.h
-file.o: file.c main.h list.h
-gnucash.o: gnucash.c main.h list.h tree.h xml.h
-list.o: list.c list.h
-main.o: main.c main.h list.h
-tree.o: tree.c tree.h
-xml.o: xml.c list.h xml.h
+.depend: $(SRCS) $(HDRS)
+	@gcc -MM $(SRCS) > $@
+	@echo -e "\n\$$(TARGET): \$$(OBJS)\n\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
