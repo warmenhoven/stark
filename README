@@ -1,6 +1,6 @@
 1. What it does
 
-   stark is a curses-based tool to display your gnucash data. It displays
+   stark is a curses-based tool to display your GnuCash data. It displays
    current account balances, values of holdings, and account registers.
 
 2. How to compile it
@@ -10,12 +10,18 @@
 
 3. How to use it
 
-   ./stark <gnucash-data-file>
+   ./stark <GnuCash-data-file>
 
    GnuCash leaves behind dozens of .xac and .log files; in case you haven't
    paid attention to the GnuCash documentation, those are just backup files
    (the .log files aren't even that) and you can ignore them or do whatever you
    want to with them. I remove mine after committing the changes to CVS.
+
+   If it complains about anything and doesn't show you an account list, odds
+   are there's a problem with your GnuCash data. Either that or you've got
+   something I don't use like AP or AR. Hopefully there's enough information in
+   the error message for you to open your data file in an editor and track down
+   where the problem is.
 
 4. That's it?
 
