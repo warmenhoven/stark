@@ -17,6 +17,7 @@ static XML_Parser parser;
 
 list *commodities = NULL;
 list *accounts = NULL;
+char *book_guid = NULL;
 
 static tree *acct_tree = NULL;
 
@@ -55,11 +56,11 @@ gnucash_get_time(void *data)
 
 	ret = mktime(&t);
 
-	s = 60 * h + m;
+	s = 60 * (60 * h + m);
 	if (sign == '-')
-		ret += s;
-	else
 		ret -= s;
+	else
+		ret += s;
 
 	return ret;
 }
@@ -116,6 +117,11 @@ gnucash_add_commodity(void *com)
 		bail("Commodity without name?\n");
 	c->name = strdup(xml_get_data(data));
 
+	data = xml_get_child(com, "cmdty:fraction");
+	if (!data || !xml_get_data(data))
+		bail("Commodity without fraction?\n");
+	c->fraction = strtol(xml_get_data(data), NULL, 0);
+
 	/* there's also a fraction element but we don't care */
 
 	commodities = list_append(commodities, c);
@@ -165,6 +171,9 @@ gnucash_add_price(void *pr)
 
 	data = xml_get_child(pr, "price:value");
 	p->value = gnucash_get_value(xml_get_data(data));
+
+	data = xml_get_child(pr, "price:id");
+	p->id = strdup(xml_get_data(data));
 }
 
 static void
@@ -256,6 +265,10 @@ gnucash_add_account(void *acc)
 	if (!data || !xml_get_data(data))
 		bail("Account with no type?\n");
 	a->type = gnucash_get_type(xml_get_data(data));
+
+	data = xml_get_child(acc, "act:description");
+	if (data && xml_get_data(data))
+		a->description = strdup(xml_get_data(data));
 
 	data = xml_get_child(acc, "act:parent");
 	if (data) {
@@ -466,7 +479,7 @@ gnucash_parse_book(void *book)
 		children = children->next;
 
 		if (!strcmp(xml_name(child), "book:id")) {
-			/* we don't really need to do anything here */
+			book_guid = strdup(xml_get_data(child));
 		} else if (!strcmp(xml_name(child), "gnc:count-data")) {
 			/* we don't really need to do anything here either. i guess we could
 			 * use this for validation purposes, but eh. */

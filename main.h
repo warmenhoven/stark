@@ -2,6 +2,7 @@
 #include "list.h"
 
 typedef struct {
+	char	*id;
 	time_t	time;
 	float	value;
 } price;
@@ -10,6 +11,7 @@ typedef struct {
 	char	*space;
 	char	*id;
 	char	*name;
+	int		fraction;
 	price	*quote;
 } commodity;
 
@@ -75,11 +77,14 @@ typedef struct {
 
 extern list *commodities;
 extern list *accounts;
+extern char *book_guid;
 
 extern account *find_account(char *);
 
 extern void gnucash_init(char *);
 
 extern void display_run(void);
+
+extern void write_file(const char *);
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */
