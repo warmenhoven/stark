@@ -22,6 +22,7 @@ static account *curr_acct = NULL;
 static int skip_trans = 0;
 static list *disp_trans = NULL;
 static transaction *curr_trans = NULL;
+#define REG_HDR 3
 
 static int
 build_expd_accts(list *accts, list **l)
@@ -457,7 +458,7 @@ draw_transactions(void)
 	list *l = curr_acct->transactions;
 	int i = skip_trans;
 	double balance = 0;
-	int line = 3;
+	int line = REG_HDR;
 
 	list_free(disp_trans);
 	disp_trans = NULL;
@@ -681,10 +682,10 @@ recalc_skip_trans(void)
 	if (curr_trans->expanded)
 		len += list_length(curr_trans->splits);
 
-	if ((len - skip_trans) - i < (LINES - 3))
+	if ((len - skip_trans) - i < (LINES - REG_HDR))
 		return;
 
-	skip_trans = len - (LINES - 3) - i;
+	skip_trans = len - (LINES - REG_HDR) - i;
 }
 
 static void
@@ -712,8 +713,8 @@ init_trans(void)
 	}
 
 	/* the header is three lines long */
-	if (i >= LINES - 3)
-		skip_trans = i - (LINES - 3);
+	if (i >= LINES - REG_HDR)
+		skip_trans = i - (LINES - REG_HDR);
 	else
 		skip_trans = 0;
 }
@@ -921,9 +922,9 @@ expand_transaction(void)
 
 	len = list_length(curr_trans->splits);
 
-	if (len + prelen >= LINES - 3) {
+	if (len + prelen >= LINES - REG_HDR) {
 		/* more splits than space below */
-		skip_trans += (len + prelen - (LINES - 3));
+		skip_trans += (len + prelen - (LINES - REG_HDR));
 	}
 
 	curr_trans->expanded = 1;
@@ -939,7 +940,7 @@ unexpand_transaction(void)
 	len = list_length(disp_trans);
 	l = list_find(disp_trans, curr_trans);
 	assert(l);
-	move(3 + len - list_length(l), 0);
+	move(REG_HDR + len - list_length(l), 0);
 	clrtobot();
 	curr_trans->expanded = 0;
 
@@ -976,11 +977,11 @@ jump_split(split *s)
 	if (curr_trans->expanded)
 		slen = list_length(curr_trans->splits);
 
-	if (len + slen >= LINES - 3) {
-		if (nlen < (LINES - 3) / 2)
-			skip_trans = len + slen - (LINES - 3) + nlen;
+	if (len + slen >= LINES - REG_HDR) {
+		if (nlen < (LINES - REG_HDR) / 2)
+			skip_trans = len + slen - (LINES - REG_HDR) + nlen;
 		else
-			skip_trans = len + slen - ((LINES - 3) / 2);
+			skip_trans = len + slen - ((LINES - REG_HDR) / 2);
 	} else {
 		skip_trans = 0;
 	}
