@@ -320,9 +320,13 @@ draw_trans_header(void)
 	for (; j < COLS; j++)
 		addch(ACS_HLINE);
 
-	x = full_acct_name(curr_acct);
-	mvaddstr(2, 0, x);
-	free(x);
+	if (display_mode != JOURNAL || journal_parent) {
+		x = full_acct_name(curr_acct);
+		mvaddstr(2, 0, x);
+		free(x);
+	} else {
+		mvaddstr(2, 0, "General Ledger");
+	}
 
 	move(3, 0);
 	for (i = 0; i < COLS; i++)
@@ -749,11 +753,8 @@ recalc_skip_trans(void)
 }
 
 static void
-init_trans(void)
+init_trans_list(void)
 {
-	list *l;
-	int i = 0;
-
 	if (display_mode == JOURNAL) {
 		if (journal_parent) {
 			trans_list = list_copy(journal_parent->transactions);
@@ -764,6 +765,16 @@ init_trans(void)
 	} else {
 		trans_list = curr_acct->transactions;
 	}
+}
+
+static void
+init_trans(void)
+{
+	list *l;
+	int i = 0;
+
+	init_trans_list();
+
 	l = trans_list;
 
 	if (curr_trans) {
@@ -1375,12 +1386,19 @@ display_run(char *filename)
 			list_free(disp_trans);
 			return;
 		} else if (c == 18) {	/* ^R */
-			char *acctid, *transid = NULL;
+			char *acctid, *transid = NULL, *journalid = NULL;
 
 			acctid = strdup(curr_acct->id);
-			if (display_mode == REGISTER)
+			if (display_mode != ACCT_LIST)
 				transid = strdup(curr_trans->id);
+			if (display_mode == JOURNAL) {
+				if (journal_parent)
+					journalid = strdup(journal_parent->id);
+				list_free(trans_list);
+			}
 			curr_trans = NULL;
+			journal_parent = NULL;
+			trans_list = NULL;
 
 			clear();
 			refresh();
@@ -1402,6 +1420,8 @@ display_run(char *filename)
 				display_mode = REGISTER;
 				if (transid)
 					free(transid);
+				if (journalid)
+					free(journalid);
 			} else {
 				account *p = curr_acct->parent;
 				curr_acct->selected = 1;
@@ -1410,6 +1430,18 @@ display_run(char *filename)
 					p = p->parent;
 				}
 				recalc_skip_acct();
+				if (journalid) {
+					journal_parent = find_account(journalid);
+					free(journalid);
+					if (!journal_parent) {
+						display_mode = ACCT_LIST;
+						initscr();
+						curs_set(0);
+						redraw_screen();
+						continue;
+					}
+				}
+				init_trans_list();
 				if (transid) {
 					list *l = trans_list;
 					while (l) {
