@@ -23,13 +23,47 @@
    the error message for you to open your data file in an editor and track down
    where the problem is.
 
+   In the accounts display, these keys do these things:
+
+   q		- exit
+
+   enter	- show this account's register
+
+   h, left	- move to the parent account
+   j, down, ^N	- move to the account shown below
+   k, up, ^P	- move to the account shown above
+   home, ^A	- move to the first account
+   end, ^E	- move to the last account
+
+   -		- hide the current account's subaccounts
+   +, right	- show the current account's subaccounts
+   space	- toggle whether the current account's subaccounts are shown
+   *		- show all subaccounts
+   /		- hide all subaccounts
+
+   In the register display, these keys do these things:
+
+   q		- go back to the account display
+
+   enter, space	- toggle whether the current transaction's splits are listed
+		  explicitly
+
+   ^J		- jump to the account referenced by the current split (for
+		  transactions with only two splits, jump to the other account)
+
+   j, down	- move to the split or transaction shown below
+   ^N		- move to the transaction below, skipping all shown splits
+   k, up	- move to the split or transaction shown above
+   ^P		- move to the transaction above, skipping all shown splits
+   home, ^A	- move to the first transaction
+   end, ^E	- move to the last transaction
+
 4. That's it?
 
    stark doesn't do any real reporting, and doesn't let you modify the data.
    That makes it pretty useless, except for when you're out and only have ssh
    access and need to see how much money you have. Here's a quick TODO list:
 
-	* display splits
 	* reporting
 	* reload from file
 	* editable
