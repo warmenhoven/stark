@@ -34,6 +34,7 @@ NITPICKY_WARNINGS = -Werror \
 CFLAGS += $(NITPICKY_WARNINGS)
 endif
 
+# PERF and DEBUG are mutually exclusive, and PERF takes precendence
 ifneq "$(PERF)" ""
 CFLAGS += -pg -fprofile-arcs -ftest-coverage -O3
 LDLIBS += -pg
@@ -89,7 +90,8 @@ test: $(TARGET)
 # rebuilding every .depend every time any .c or .h changes is probably bad
 .depend: $(SRCS) $(HDRS)
 	$(CC) -MM $(CFLAGS) $(SRCS) > $@
-	@echo -e "\n\$$(TARGET): \$$(OBJS)\n\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
+	@echo -e "\n\$$(TARGET): \$$(OBJS)" >> $@
+	@echo -e "\t\$$(CC) \$$(OBJS) \$$(LDLIBS) -o \$$@" >> $@
 
 depend: .depend
 
