@@ -866,7 +866,7 @@ unexpand_transaction(void)
 static void
 jump_split(split *s)
 {
-	int len, slen, nlen;
+	int len, slen = 0, nlen;
 	account *a;
 	list *l;
 
@@ -882,7 +882,8 @@ jump_split(split *s)
 	assert(l);
 	nlen = list_length(l->next);
 	len = list_length(curr_acct->transactions) - nlen;
-	slen = list_length(curr_trans->splits);
+	if (curr_trans->expanded)
+		slen = list_length(curr_trans->splits);
 
 	if (len + slen >= LINES - 3) {
 		if (nlen < (LINES - 3) / 2)
