@@ -44,6 +44,7 @@ typedef struct _acct {
 } account;
 
 typedef struct {
+	char	*account;
 	char	*memo;
 	char	recstate;
 	time_t	recdate;
@@ -53,16 +54,22 @@ typedef struct {
 } split;
 
 typedef struct {
+	/* data */
 	int		num;
 	time_t	posted;
 	time_t	entered;
 	char	*description;
 	list	*splits;
+
+	/* display */
+	int		selected;
 } transaction;
 
 extern list *commodities;
 extern list *accounts;
 extern list *transactions;
+
+extern account *find_account(char *, list *);
 
 extern void gnucash_init(char *);
 

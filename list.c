@@ -67,7 +67,7 @@ list_insert_sorted(list *l, void *data, cmpfunc func)
 
 	if (!s) return list_new(data);
 
-	while (func(s->data, data) > 0 && s->next) s = s->next;
+	while (func(data, s->data) > 0 && s->next) s = s->next;
 	t = s->next;
 	s->next = list_new(data);
 	s->next->prev = s;

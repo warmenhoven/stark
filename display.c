@@ -9,10 +9,10 @@ static enum {
 } display_mode;
 
 static int skip_acct = 0;
-
+static list *disp_acct = NULL;
 static account *curr_acct = NULL;
 
-static list *disp_acct = NULL;
+static int skip_trans = 0;
 
 static int
 build_exp_accts(list *accts, list **l)
@@ -172,13 +172,13 @@ draw_trans_header()
 	while (l && l->next) l = l->next;
 
 	move(0, 0);
-	addstr(" DATE  ");
+	addstr("   DATE   ");
 	addch(ACS_VLINE);
 	addstr(" NUM  ");
 	addch(ACS_VLINE);
-	addstr(" DESCRIPTION             ");
+	addstr(" DESCRIPTION            ");
 	addch(ACS_VLINE);
-	addstr(" TRANSFER                ");
+	addstr(" TRANSFER               ");
 	addch(ACS_VLINE);
 	addstr(" R ");
 	addch(ACS_VLINE);
@@ -190,7 +190,7 @@ draw_trans_header()
 	clrtoeol();
 
 	move(1, 0);
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < 10; i++)
 		addch(ACS_HLINE);
 	addch(ACS_BTEE);
 	j += i + 1;
@@ -198,11 +198,11 @@ draw_trans_header()
 		addch(ACS_HLINE);
 	addch(ACS_BTEE);
 	j += i + 1;
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < 24; i++)
 		addch(ACS_HLINE);
 	addch(ACS_BTEE);
 	j += i + 1;
-	for (i = 0; i < 25; i++)
+	for (i = 0; i < 24; i++)
 		addch(ACS_HLINE);
 	addch(ACS_BTEE);
 	j += i + 1;
@@ -225,9 +225,115 @@ draw_trans_header()
 		addch(ACS_HLINE);
 }
 
-static void
-draw_tranactions()
+static float
+trans_balance(transaction *t, account *a)
 {
+	float balance = 0;
+	list *l = t->splits;
+
+	while (l) {
+		split *s = l->data;
+		l = l->next;
+
+		if (strcmp(s->account, a->id))
+			continue;
+
+		balance += s->quantity;
+	}
+
+	return balance;
+}
+
+static void
+draw_trans(transaction *t, int line, float total)
+{
+	float balance = 0;
+	char tmpstr[11];
+	int i;
+
+	if (t->selected)
+		attron(A_REVERSE);
+
+	move(line, 0);
+	for (i = 0; i < COLS; i++)
+		addch(' ');
+
+	strftime(tmpstr, 11, "%m/%d/%Y", localtime(&t->posted));
+	mvaddstr(line, 0, tmpstr);
+
+	if (t->num) {
+		sprintf(tmpstr, "%d", t->num);
+		mvaddstr(line, 12, tmpstr);
+	}
+
+	mvaddstr(line, 19, t->description);
+	mvaddstr(line, 41, "   ");
+
+	if (list_length(t->splits) > 2) {
+		mvaddstr(line, 44, "- Split Transaction -");
+	} else if (!t->splits->next) {
+		mvaddstr(line, 44, "                     ");
+	} else {
+		account *a;
+		split *s = t->splits->data;
+
+		if (!strcmp(s->account, curr_acct->id))
+			s = t->splits->next->data;
+
+		a = find_account(s->account, accounts);
+		if (!a)
+			mvaddstr(line, 44, "                     ");
+		else
+			mvaddstr(line, 44, a->name);
+
+		mvaddstr(line, 66, "   ");
+		mvaddch(line, 69, s->recstate);
+		mvaddstr(line, 70, "   ");
+	}
+
+	balance = trans_balance(t, curr_acct);
+	if (balance > 0)
+		sprintf(tmpstr, "$%.02f", balance);
+	else
+		sprintf(tmpstr, "$%.02f", 0 - balance);
+	if (balance > 0) {
+		mvaddstr(line, 73, tmpstr);
+		for (i = 84; i < 96; i++)
+			mvaddch(line, i, ' ');
+	} else {
+		for (i = 73; i < 86; i++)
+			mvaddch(line, i, ' ');
+		mvaddstr(line, 86, tmpstr);
+	}
+	mvaddstr(line, 96, "   ");
+
+	sprintf(tmpstr, "%.02f", balance + total);
+	mvaddstr(line, 99, tmpstr);
+
+	if (t->selected)
+		attroff(A_REVERSE);
+}
+
+static void
+draw_transactions()
+{
+	list *l = curr_acct->transactions;
+	int i = skip_trans;
+	float balance = 0;
+	int line = 3;
+
+	while (i--) {
+		transaction *t = l->data;
+		balance += trans_balance(t, curr_acct);
+		l = l->next;
+	}
+
+	while (l && line < LINES) {
+		transaction *t = l->data;
+		draw_trans(t, line++, balance);
+		balance += trans_balance(t, curr_acct);
+		l = l->next;
+	}
 }
 
 static void
@@ -241,7 +347,7 @@ redraw_screen()
 		break;
 	case ACCT_DETAIL:
 		draw_trans_header();
-		draw_tranactions();
+		draw_transactions();
 		break;
 	}
 
@@ -374,7 +480,7 @@ select_prev_acct(account *a)
 }
 
 static void
-recalc_skip()
+recalc_skip_acct()
 {
 	list *exp = NULL;
 	list *l;
@@ -400,6 +506,29 @@ recalc_skip()
 	skip_acct = len - LINES - i;
 }
 
+static void
+init_trans()
+{
+	list *l = curr_acct->transactions;
+	int i = 0;
+
+	while (l) {
+		transaction *t = l->data;
+		l = l->next;
+		if (l)
+			t->selected = 0;
+		else
+			t->selected = 1;
+		i++;
+	}
+
+	/* the header is three lines long */
+	if (i >= LINES - 3)
+		skip_trans = i - (LINES - 3);
+	else
+		skip_trans = 0;
+}
+
 static int
 list_handle_key(int c)
 {
@@ -414,6 +543,7 @@ list_handle_key(int c)
 	case 13:	/* ^M */
 		display_mode = ACCT_DETAIL;
 		clear();
+		init_trans();
 		redraw_screen();
 		break;
 	case 'h':
@@ -579,7 +709,7 @@ list_handle_key(int c)
 	case KEY_RESIZE:
 		endwin();
 		initscr();
-		recalc_skip();
+		recalc_skip_acct();
 		clear();
 		redraw_screen();
 		break;
