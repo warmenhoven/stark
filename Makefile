@@ -53,7 +53,7 @@ clean:
 dist:
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
-	cp Makefile README *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
+	cp Makefile README $(TARGET).1 *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
 	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)-`date +%Y%m%d`
 	rm -rf tmp
 
