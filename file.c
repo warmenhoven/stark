@@ -230,6 +230,40 @@ account_type_string(act_type t)
 
 /* XXX this isn't right at all yet */
 static void
+print_slots(FILE *f, account *a)
+{
+	if (!a->oldsrc && !a->has_placeholder && !a->has_notes)
+		return;
+
+	fprintf(f, "  <act:slots>\n");
+
+	if (a->oldsrc) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>old-price-source</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
+				a->oldsrc);
+		fprintf(f, "    </slot>\n");
+	}
+
+	if (a->has_placeholder) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>placeholder</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
+				a->placeholder ? "true" : "false");
+		fprintf(f, "    </slot>\n");
+	}
+
+	if (a->has_notes) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>notes</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"string\"></slot:value>\n");
+		fprintf(f, "    </slot>\n");
+	}
+
+	fprintf(f, "  </act:slots>\n");
+}
+
+static void
 write_accounts(FILE *f, list *l)
 {
 	while (l) {
@@ -257,17 +291,7 @@ write_accounts(FILE *f, list *l)
 		if (a->description)
 			fprintf(f, "  <act:description>%s</act:description>\n",
 					xml_str(a->description));
-		fprintf(f, "  <act:slots>\n");
-		fprintf(f, "    <slot>\n");
-		fprintf(f, "      <slot:key>placeholder</slot:key>\n");
-		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
-				a->placeholder ? "true" : "false");
-		fprintf(f, "    </slot>\n");
-		fprintf(f, "    <slot>\n");
-		fprintf(f, "      <slot:key>notes</slot:key>\n");
-		fprintf(f, "      <slot:value type=\"string\"></slot:value>\n");
-		fprintf(f, "    </slot>\n");
-		fprintf(f, "  </act:slots>\n");
+		print_slots(f, a);
 		if (a->parent)
 			fprintf(f, "  <act:parent type=\"guid\">%s</act:parent>\n",
 					a->parent->id);

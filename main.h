@@ -47,7 +47,12 @@ typedef struct _acct {
 	commodity		*commodity;
 	list			*transactions;
 	int				placeholder;
+
+	/* stuff we don't care about (yet?), except for file */
 	int				scu;
+	char			*oldsrc;
+	int				has_placeholder;
+	int				has_notes;
 
 	/* display */
 	int				expanded;

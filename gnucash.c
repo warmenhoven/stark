@@ -310,12 +310,21 @@ gnucash_add_account(void *acc)
 			l = l->next;
 			key = xml_get_child(data, "slot:key");
 			val = xml_get_child(data, "slot:value");
-			if (!key || !xml_get_data(key) || !val || !xml_get_data(val))
+			if (!key || !xml_get_data(key) || !val)
 				continue;
-			if (strcmp(xml_get_data(key), "placeholder"))
-				continue;
-			if (!strcmp(xml_get_data(val), "true"))
-				a->placeholder = 1;
+			if (!strcmp(xml_get_data(key), "placeholder")) {
+				a->has_placeholder = 1;
+				if (!xml_get_data(val))
+					continue;
+				if (!strcmp(xml_get_data(val), "true"))
+					a->placeholder = 1;
+			} else if (!strcmp(xml_get_data(key), "old-price-source")) {
+				if (!xml_get_data(val))
+					continue;
+				a->oldsrc = strdup(xml_get_data(val));
+			} else if (!strcmp(xml_get_data(key), "notes")) {
+				a->has_notes = 1;
+			}
 		}
 	}
 	/* we should probably handle other things as well... */
