@@ -865,6 +865,46 @@ unexpand_transaction(void)
 	curr_trans->expanded = 0;
 }
 
+static void
+jump_split(split *s)
+{
+	int len, slen, nlen;
+	account *a;
+	list *l;
+
+	a = find_account(s->account, accounts);
+	if (!a)
+		return;
+
+	curr_acct->selected = 0;
+	curr_acct = a;
+	curr_acct->selected = 1;
+
+	while ((a = a->parent) != NULL)
+		a->expanded = 1;
+	recalc_skip_acct();
+
+	l = list_find(curr_acct->transactions, curr_trans);
+	assert(l);
+	nlen = list_length(l->next);
+	len = list_length(curr_acct->transactions) - nlen;
+	slen = list_length(curr_trans->splits);
+	if (slen <= 2)
+		slen = 0;
+
+	if (len + slen >= LINES - 3) {
+		if (nlen < (LINES - 3) / 2)
+			skip_trans = len + slen - (LINES - 3) + nlen;
+		else
+			skip_trans = len + slen - ((LINES - 3) / 2);
+	} else {
+		skip_trans = 0;
+	}
+
+	clear();
+	redraw_screen();
+}
+
 static int
 detail_handle_key(int c)
 {
@@ -893,6 +933,22 @@ detail_handle_key(int c)
 			expand_transaction();
 		}
 		redraw_screen();
+		break;
+
+	case 10:	/* ^J */
+		if (curr_trans->selected && (list_length(curr_trans->splits) > 2))
+			break;
+		l = curr_trans->splits;
+		while (l) {
+			split *s = l->data;
+			l = l->next;
+			if (!curr_trans->selected && !s->selected)
+				continue;
+			if (curr_trans->selected && !strcmp(s->account, curr_acct->id))
+				continue;
+			jump_split(s);
+			break;
+		}
 		break;
 
 	/* MOTION */
