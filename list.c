@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include "list.h"
 
-list *list_new(void *data)
+list *
+list_new(void *data)
 {
 	list *l = malloc(sizeof(list));
 	l->next = NULL;
@@ -9,7 +10,8 @@ list *list_new(void *data)
 	return l;
 }
 
-unsigned int list_length(list *l)
+unsigned int
+list_length(list *l)
 {
 	unsigned int c = 0;
 
@@ -21,7 +23,8 @@ unsigned int list_length(list *l)
 	return c;
 }
 
-void *list_nth(list *l, int n)
+void *
+list_nth(list *l, int n)
 {
 	while (l && n) {
 		l = l->next;
@@ -31,7 +34,19 @@ void *list_nth(list *l, int n)
 	return NULL;
 }
 
-list *list_append(list *l, void *data)
+void *
+list_find(list *l, void *data)
+{
+	while (l) {
+		if (l->data == data)
+			return l;
+		l = l->next;
+	}
+	return NULL;
+}
+
+list *
+list_append(list *l, void *data)
 {
 	list *s = l;
 
@@ -43,14 +58,16 @@ list *list_append(list *l, void *data)
 	return l;
 }
 
-list *list_prepend(list *l, void *data)
+list *
+list_prepend(list *l, void *data)
 {
 	list *s = list_new(data);
 	s->next = l;
 	return s;
 }
 
-list *list_remove(list *l, void *data)
+list *
+list_remove(list *l, void *data)
 {
 	list *s = l, *p = NULL;
 
@@ -72,7 +89,8 @@ list *list_remove(list *l, void *data)
 	return l;
 }
 
-void list_free(list *l)
+void
+list_free(list *l)
 {
 	while (l) {
 		list *s = l;
@@ -80,3 +98,5 @@ void list_free(list *l)
 		free(s);
 	}
 }
+
+/* vim:set ts=4 sw=4 noet ai tw=80: */

@@ -9,48 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "main.h"
 #include "xml.h"
-
-typedef struct {
-	time_t	time;
-	float	value;
-} price;
-
-typedef struct {
-	char	*space;
-	char	*id;
-	char	*name;
-	price	*quote;
-} commodity;
-
-typedef enum {
-	ASSET = 1,
-	BANK,
-	CASH,
-	CREDIT,
-	EQUITY,
-	EXPENSE,
-	INCOME,
-	LIABILITY,
-	MUTUAL,
-	STOCK
-} act_type;
-
-typedef struct _acct {
-	struct _acct	*parent;
-	list			*subs;
-	char			*name;
-	char			*id;
-	act_type		type;
-	commodity		*commodity;
-} account;
-
-typedef struct {
-	int		num;
-	time_t	posted;
-	time_t	entered;
-	char	*description;
-} transaction;
 
 static XML_Parser parser;
 static void *curr = NULL;
@@ -101,6 +61,17 @@ gnucash_get_time(void *data)
 		ret -= s;
 
 	return ret;
+}
+
+static float
+gnucash_get_value(char *v)
+{
+	long n, d;
+	n = strtol(v, NULL, 0);
+	v = strchr(v, '/');
+	v++;
+	d = strtoul(v, NULL, 0);
+	return ((float)n/(float)d);
 }
 
 static commodity *
@@ -173,27 +144,25 @@ gnucash_add_price(void *pr)
 			c = find_commodity(xml_get_data(sp), xml_get_data(id));
 			if (c) {
 				if (c->quote) {
-					printf("duplicate quote %s\n", c->id);
+					/* eh. silently ignore.
+					fprintf(stderr, "duplicate quote %s\n", c->id);
+					*/
 					free(p);
 					return;
 				} else {
 					c->quote = p;
 				}
 			} else {
-				printf("couldn't find commodity %s\n", xml_get_data(id));
+				/* eh. silently ignore.
+				fprintf(stderr, "couldn't find commodity %s\n", xml_get_data(id));
+				*/
 				free(p);
 				return;
 			}
 		} else if (!strcmp(xml_name(data), "price:time")) {
 			p->time = gnucash_get_time(xml_get_child(data, "ts:date"));
 		} else if (!strcmp(xml_name(data), "price:value")) {
-			unsigned long n, d;
-			char *v = xml_get_data(data);
-			n = strtoul(v, NULL, 0);
-			v = strchr(v, '/');
-			v++;
-			d = strtoul(v, NULL, 0);
-			p->value = (float)n/(float)d;
+			p->value = gnucash_get_value(xml_get_data(data));
 		}
 	}
 
@@ -304,6 +273,7 @@ gnucash_add_account(void *acc)
 		} else if (!strcmp(xml_name(data), "act:non-standard-scu")) {
 			/* why does gnucash do it this way? */
 		} else if (!strcmp(xml_name(data), "act:description")) {
+			a->description = strdup(xml_get_data(data));
 			/* XXX: we should probably keep this but for now, eh */
 		} else if (!strcmp(xml_name(data), "act:slots")) {
 			/* XXX: this will probably become necessary later */
@@ -335,10 +305,60 @@ gnucash_print_accounts(list *l, char *prefix)
 			printf(" (%s)", a->commodity->name);
 		else
 			printf(" (USD)");
+		printf(" (%u transactions)", list_length(a->transactions));
+		printf(" (%.03f %s)", a->quantity,
+			   a->commodity ? a->commodity->id : "USD");
 		printf("\n");
 		snprintf(newprefix, sizeof(newprefix), "%s |", prefix);
 		gnucash_print_accounts(a->subs, newprefix);
 	}
+}
+
+static void
+gnucash_add_split(transaction *t, void *sp)
+{
+	list *children = xml_get_children(sp);
+	split *s;
+
+	if (!children)
+		bail("No children in splits?\n");
+
+	s = calloc(sizeof (split), 1);
+	if (!s)
+		bail("can't calloc!\n");
+
+	while (children) {
+		void *data = children->data;
+		children = children->next;
+
+		if (!strcmp(xml_name(data), "split:id")) {
+			/* honestly, does everything need a guid */
+		} else if (!strcmp(xml_name(data), "split:memo")) {
+			s->memo = strdup(xml_get_data(data));
+		} else if (!strcmp(xml_name(data), "split:reconciled-state")) {
+			s->recstate = *xml_get_data(data);
+		} else if (!strcmp(xml_name(data), "split:reconcile-date")) {
+			s->recdate = gnucash_get_time(xml_get_child(data, "ts:date"));
+		} else if (!strcmp(xml_name(data), "split:value")) {
+			s->value = gnucash_get_value(xml_get_data(data));
+		} else if (!strcmp(xml_name(data), "split:quantity")) {
+			s->quantity = gnucash_get_value(xml_get_data(data));
+		} else if (!strcmp(xml_name(data), "split:account")) {
+			account *a = gnucash_find_account(xml_get_data(data), accounts);
+			if (!a)
+				bail("Split for non-account?\n");
+			if (!list_find(a->transactions, t)) {
+				a->transactions = list_append(a->transactions, t);
+				a->quantity += s->quantity;
+			}
+		} else if (!strcmp(xml_name(data), "split:action")) {
+			s->action = strdup(xml_get_data(data));
+		} else {
+			bail("Unknown data %s in split\n", xml_name(data));
+		}
+	}
+
+	t->splits = list_append(t->splits, s);
 }
 
 static void
@@ -370,6 +390,13 @@ gnucash_add_transaction(void *trans)
 		} else if (!strcmp(xml_name(data), "trn:description")) {
 			t->description = strdup(xml_get_data(data));
 		} else if (!strcmp(xml_name(data), "trn:splits")) {
+			list *splits = xml_get_children(data);
+			while (splits) {
+				if (strcmp(xml_name(splits->data), "trn:split"))
+					bail("non-split (%s) in splits?\n", xml_name(splits->data));
+				gnucash_add_split(t, splits->data);
+				splits = splits->next;
+			}
 		} else {
 			bail("Unknown data %s in transaction\n", xml_name(data));
 		}
@@ -425,7 +452,10 @@ gnucash_parse_book(void *book)
 		}
 	}
 
+	/*
+	printf("%u transactions\n", list_length(transactions));
 	gnucash_print_accounts(accounts, "");
+	*/
 }
 
 static void
@@ -498,7 +528,7 @@ gnucash_chardata(void *data, const char *s, int len)
 	xml_data(curr, s, len);
 }
 
-int
+void
 gnucash_init(char *filename)
 {
 	FILE *f = NULL;
@@ -518,8 +548,6 @@ gnucash_init(char *filename)
 			bail("unable to parse %s\n", filename);
 
 	fclose(f);
-
-	return 0;
 }
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */

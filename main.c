@@ -15,5 +15,11 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage(argv[0]);
 
-	return 0 - gnucash_init(argv[1]);
+	gnucash_init(argv[1]);
+
+	display_init();
+
+	return 0;
 }
+
+/* vim:set ts=4 sw=4 noet ai tw=80: */

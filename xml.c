@@ -15,7 +15,8 @@ typedef struct _xmlnode {
 	char *data;
 } xmlnode;
 
-void *xml_new(const char *el)
+void *
+xml_new(const char *el)
 {
 	xmlnode *node = calloc(1, sizeof (xmlnode));
 	if (!node)
@@ -24,7 +25,8 @@ void *xml_new(const char *el)
 	return node;
 }
 
-void *xml_child(void *p, const char *el)
+void *
+xml_child(void *p, const char *el)
 {
 	xmlnode *parent = p, *node;
 
@@ -42,7 +44,8 @@ void *xml_child(void *p, const char *el)
 	return node;
 }
 
-void xml_attrib(void *n, const char *attr, const char *val)
+void
+xml_attrib(void *n, const char *attr, const char *val)
 {
 	xmlnode *node = n, *attrib;
 
@@ -58,7 +61,8 @@ void xml_attrib(void *n, const char *attr, const char *val)
 	node->attribs = list_append(node->attribs, attrib);
 }
 
-void xml_data(void *n, const char *data, int len)
+void
+xml_data(void *n, const char *data, int len)
 {
 	xmlnode *node = n;
 	if (!node)
@@ -72,7 +76,8 @@ void xml_data(void *n, const char *data, int len)
 	}
 }
 
-void *xml_parent(void *child)
+void *
+xml_parent(void *child)
 {
 	xmlnode *node = child;
 	if (!node)
@@ -81,7 +86,8 @@ void *xml_parent(void *child)
 	return node->parent;
 }
 
-char *xml_name(void *n)
+char *
+xml_name(void *n)
 {
 	xmlnode *node = n;
 	if (!node)
@@ -90,7 +96,8 @@ char *xml_name(void *n)
 	return node->name;
 }
 
-void *xml_get_child(void *n, const char *name)
+void *
+xml_get_child(void *n, const char *name)
 {
 	xmlnode *node = n;
 	list *l;
@@ -108,7 +115,8 @@ void *xml_get_child(void *n, const char *name)
 	return NULL;
 }
 
-list *xml_get_children(void *p)
+list *
+xml_get_children(void *p)
 {
 	xmlnode *parent = p;
 	if (!parent)
@@ -116,7 +124,8 @@ list *xml_get_children(void *p)
 	return parent->children;
 }
 
-char *xml_get_attrib(void *n, const char *name)
+char *
+xml_get_attrib(void *n, const char *name)
 {
 	xmlnode *node = n;
 	list *l;
@@ -134,13 +143,15 @@ char *xml_get_attrib(void *n, const char *name)
 	return NULL;
 }
 
-char *xml_get_data(void *n)
+char *
+xml_get_data(void *n)
 {
 	if (!n) return NULL;
 	return ((xmlnode *)n)->data;
 }
 
-void xml_free(void *n)
+void
+xml_free(void *n)
 {
 	xmlnode *node = n;
 	if (!node)
@@ -165,3 +176,5 @@ void xml_free(void *n)
 
 	free(node);
 }
+
+/* vim:set ts=4 sw=4 noet ai tw=80: */

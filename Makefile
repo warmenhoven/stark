@@ -1,8 +1,8 @@
 CC = gcc
-LDLIBS = -lexpat
+LDLIBS = -lcurses -lexpat
 CFLAGS += -g -Wall
 
-OBJS = gnucash.o list.o main.o xml.o
+OBJS = display.o gnucash.o list.o main.o xml.o
 
 ifneq "$(PERF)" ""
 CFLAGS += -fprofile-arcs -ftest-coverage -O0
