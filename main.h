@@ -44,6 +44,7 @@ typedef struct _acct {
 } account;
 
 typedef struct {
+	/* data */
 	char	*account;
 	char	*memo;
 	time_t	recdate;
@@ -52,6 +53,9 @@ typedef struct {
 	char	*action;
 	char	recstate;
 	char	pad[3];
+
+	/* display */
+	int		selected;
 } split;
 
 typedef struct {
@@ -64,6 +68,7 @@ typedef struct {
 	list	*splits;
 
 	/* display */
+	int		expanded;
 	int		selected;
 } transaction;
 

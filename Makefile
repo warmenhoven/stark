@@ -6,8 +6,9 @@ CFLAGS += -g -DDEBUG
 endif
 
 ifneq "$(PICKY)" ""
-CFLAGS += -Wall -Werror
-NITPICKY_WARNINGS = -W \
+NITPICKY_WARNINGS = -Werror \
+		    -Wall \
+		    -W \
 		    -Wundef \
 		    -Wendif-labels \
 		    -Wshadow \
@@ -30,8 +31,6 @@ NITPICKY_WARNINGS = -W \
 CFLAGS += $(NITPICKY_WARNINGS)
 endif
 
-OBJS = display.o gnucash.o list.o main.o xml.o
-
 ifneq "$(PERF)" ""
 CFLAGS += -fprofile-arcs -ftest-coverage -O0
 else
@@ -39,6 +38,8 @@ CFLAGS += -O3
 endif
 
 TARGET = stark
+
+OBJS = display.o gnucash.o list.o main.o xml.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@

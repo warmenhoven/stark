@@ -324,6 +324,56 @@ draw_trans(transaction *t, int line, float total)
 }
 
 static void
+draw_split(split *s, int line)
+{
+	char tmpstr[11];
+	account *a;
+	int i;
+
+	if (s->selected)
+		attron(A_REVERSE);
+
+	move(line, 0);
+	for (i = 0; i < COLS; i++)
+		addch(' ');
+
+	if (s->action)
+		mvaddstr(line, 12, s->action);
+
+	if (s->memo)
+		mvaddstr(line, 19, s->memo);
+	mvaddstr(line, 41, "   ");
+
+	a = find_account(s->account, accounts);
+	if (!a)
+		mvaddstr(line, 44, "                     ");
+	else
+		mvaddstr(line, 44, a->name);
+
+	mvaddstr(line, 66, "   ");
+	mvaddch(line, 69, s->recstate);
+	mvaddstr(line, 70, "   ");
+
+	if (s->quantity > 0)
+		sprintf(tmpstr, "$%.02f", s->quantity);
+	else
+		sprintf(tmpstr, "$%.02f", 0 - s->quantity);
+	if (s->quantity > 0) {
+		mvaddstr(line, 73, tmpstr);
+		for (i = 84; i < 96; i++)
+			mvaddch(line, i, ' ');
+	} else {
+		for (i = 73; i < 86; i++)
+			mvaddch(line, i, ' ');
+		mvaddstr(line, 86, tmpstr);
+	}
+	mvaddstr(line, 96, "   ");
+
+	if (s->selected)
+		attroff(A_REVERSE);
+}
+
+static void
 draw_transactions(void)
 {
 	list *l = curr_acct->transactions;
@@ -343,6 +393,13 @@ draw_transactions(void)
 	while (l && line < LINES) {
 		transaction *t = l->data;
 		draw_trans(t, line++, balance);
+		if (t->expanded) {
+			list *s = t->splits;
+			while (s) {
+				draw_split(s->data, line++);
+				s = s->next;
+			}
+		}
 		disp_trans = list_append(disp_trans, t);
 		balance += trans_balance(t, curr_acct);
 		l = l->next;
@@ -541,6 +598,9 @@ recalc_skip_trans(void)
 	l = list_find(curr_acct->transactions, curr_trans);
 	assert(l);
 	i = list_length(l->next);
+
+	if (curr_trans->expanded)
+		len += list_length(curr_trans->splits);
 
 	if ((len - skip_trans) - i < LINES)
 		return;
@@ -761,6 +821,27 @@ list_handle_key(int c)
 
 	return 0;
 }
+static void
+expand_transaction(void)
+{
+	int postlen, len;
+	list *l;
+
+	len = list_length(curr_trans->splits);
+	if (len <= 2)
+		return;
+
+	l = list_find(disp_trans, curr_trans);
+	assert(l);
+	postlen = list_length(l->next);
+
+	if (len > postlen) {
+		/* more splits than transactions to scoot down */
+		skip_trans -= (len - postlen);
+	}
+
+	curr_trans->expanded = 1;
+}
 
 static int
 detail_handle_key(int c)
@@ -774,7 +855,23 @@ detail_handle_key(int c)
 	switch (c) {
 	case 'q':
 		display_mode = ACCT_LIST;
+		if (curr_trans)
+			curr_trans->expanded = 0;
 		clear();
+		redraw_screen();
+		break;
+
+	case 13:	/* ^M */
+	case ' ':
+		if (curr_trans->expanded) {
+			l = list_find(disp_trans, curr_trans);
+			assert(l);
+			move(LINES - list_length(l->next), 0);
+			clrtobot();
+			curr_trans->expanded = 0;
+		} else {
+			expand_transaction();
+		}
 		redraw_screen();
 		break;
 
