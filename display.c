@@ -12,7 +12,7 @@
 
 static enum {
 	ACCT_LIST,
-	ACCT_DETAIL
+	REGISTER
 } display_mode;
 
 static int skip_acct = 0;
@@ -484,7 +484,7 @@ redraw_screen(void)
 		disp_acct = NULL;
 		draw_accounts();
 		break;
-	case ACCT_DETAIL:
+	case REGISTER:
 		draw_trans_header();
 		draw_transactions();
 		break;
@@ -722,7 +722,7 @@ list_handle_key(int c)
 	case 13:	/* ^M */
 		if (curr_acct->placeholder)
 			break;
-		display_mode = ACCT_DETAIL;
+		display_mode = REGISTER;
 		clear();
 		init_trans();
 		redraw_screen();
@@ -980,7 +980,7 @@ jump_split(split *s)
 }
 
 static int
-detail_handle_key(int c)
+register_handle_key(int c)
 {
 	account *a;
 	list *l;
@@ -1278,7 +1278,7 @@ display_run(char *filename)
 			char *acctid, *transid = NULL;
 
 			acctid = strdup(curr_acct->id);
-			if (display_mode == ACCT_DETAIL)
+			if (display_mode == REGISTER)
 				transid = strdup(curr_trans->id);
 			curr_trans = NULL;
 
@@ -1299,7 +1299,7 @@ display_run(char *filename)
 			free(acctid);
 			if (!curr_acct) {
 				curr_acct = accounts->data;
-				display_mode = ACCT_DETAIL;
+				display_mode = REGISTER;
 				if (transid)
 					free(transid);
 			} else {
@@ -1351,8 +1351,8 @@ display_run(char *filename)
 				return;
 			}
 			break;
-		case ACCT_DETAIL:
-			if (detail_handle_key(c)) {
+		case REGISTER:
+			if (register_handle_key(c)) {
 				clear();
 				refresh();
 				endwin();
