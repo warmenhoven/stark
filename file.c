@@ -242,14 +242,6 @@ print_slots(FILE *f, account *a)
 
 	fprintf(f, "  <act:slots>\n");
 
-	if (a->last_num) {
-		fprintf(f, "    <slot>\n");
-		fprintf(f, "      <slot:key>last-num</slot:key>\n");
-		fprintf(f, "      <slot:value type=\"string\">%d</slot:value>\n",
-				a->last_num);
-		fprintf(f, "    </slot>\n");
-	}
-
 	if (a->oldsrc) {
 		fprintf(f, "    <slot>\n");
 		fprintf(f, "      <slot:key>old-price-source</slot:key>\n");
@@ -271,6 +263,14 @@ print_slots(FILE *f, account *a)
 		fprintf(f, "      <slot:key>notes</slot:key>\n");
 		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
 				a->notes ? a->notes : "");
+		fprintf(f, "    </slot>\n");
+	}
+
+	if (a->last_num) {
+		fprintf(f, "    <slot>\n");
+		fprintf(f, "      <slot:key>last-num</slot:key>\n");
+		fprintf(f, "      <slot:value type=\"string\">%d</slot:value>\n",
+				a->last_num);
 		fprintf(f, "    </slot>\n");
 	}
 
