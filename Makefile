@@ -1,6 +1,19 @@
 CC = gcc
 LDLIBS = -lcurses -lexpat
-CFLAGS += -g -W -Wall -Werror -Wshadow -ansi -pedantic
+CFLAGS += -g -Wall -Werror
+
+NITPICKY_WARNINGS = -W \
+		    -Wundef \
+		    -Wendif-labels \
+		    -Wshadow \
+		    -Wpointer-arith \
+		    -Wcast-qual \
+		    -Wcast-align \
+		    -Wwrite-strings \
+		    -ansi \
+		    -pedantic
+
+CFLAGS += $(NITPICKY_WARNINGS)
 
 OBJS = display.o gnucash.o list.o main.o xml.o
 

@@ -19,7 +19,7 @@ list *accounts = NULL;
 list *transactions = NULL;
 
 static void
-bail(char *f, ...)
+bail(const char *f, ...)
 {
 	va_list ap;
 
