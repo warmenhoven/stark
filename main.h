@@ -56,6 +56,7 @@ typedef struct {
 
 typedef struct {
 	/* data */
+	char	*id;
 	int		num;
 	time_t	posted;
 	time_t	entered;

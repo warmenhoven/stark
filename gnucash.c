@@ -92,27 +92,29 @@ find_commodity(char *space, char *id)
 static void
 gnucash_add_commodity(void *com)
 {
-	list *children = xml_get_children(com);
 	commodity *c;
-
-	if (!children)
-		bail("No children in commodity?\n");
+	void *data;
 
 	c = calloc(sizeof (commodity), 1);
 	if (!c)
 		bail("can't calloc!\n");
 
-	while (children) {
-		void *data = children->data;
-		children = children->next;
+	data = xml_get_child(com, "cmdty:space");
+	if (!data || !xml_get_data(data))
+		bail("Commodity without space?\n");
+	c->space = strdup(xml_get_data(data));
 
-		if (!strcmp(xml_name(data), "cmdty:space"))
-			c->space = strdup(xml_get_data(data));
-		else if (!strcmp(xml_name(data), "cmdty:id"))
-			c->id = strdup(xml_get_data(data));
-		else if (!strcmp(xml_name(data), "cmdty:name"))
-			c->name = strdup(xml_get_data(data));
-	}
+	data = xml_get_child(com, "cmdty:id");
+	if (!data || !xml_get_data(data))
+		bail("Commodity without id?\n");
+	c->id = strdup(xml_get_data(data));
+
+	data = xml_get_child(com, "cmdty:name");
+	if (!data || !xml_get_data(data))
+		bail("Commodity without name?\n");
+	c->name = strdup(xml_get_data(data));
+
+	/* there's also a fraction element but we don't care */
 
 	commodities = list_append(commodities, c);
 }
@@ -120,57 +122,51 @@ gnucash_add_commodity(void *com)
 static void
 gnucash_add_price(void *pr)
 {
-	list *children = xml_get_children(pr);
+	void *data, *sp, *id;
 	commodity *c = NULL;
 	price *p;
-
-	if (!children)
-		bail("No children in price?\n");
 
 	p = calloc(sizeof (price), 1);
 	if (!p)
 		bail("can't calloc!\n");
 
-	while (children) {
-		void *data = children->data;
-		children = children->next;
+	data = xml_get_child(pr, "price:commodity");
+	if (!data)
+		bail("No commodity information for price?\n");
+	sp = xml_get_child(data, "cmdty:space");
+	id = xml_get_child(data, "cmdty:id");
 
-		if (!strcmp(xml_name(data), "price:id")) {
-			/* we can skip this */
-		} else if (!strcmp(xml_name(data), "price:commodity")) {
-			void *sp = xml_get_child(data, "cmdty:space");
-			void *id = xml_get_child(data, "cmdty:id");
-			c = find_commodity(xml_get_data(sp), xml_get_data(id));
-			if (c) {
-				if (c->quote) {
-					void *tm = xml_get_child(pr, "price:time");
-					p->time = gnucash_get_time(xml_get_child(tm, "ts:date"));
-					if (c->quote->time >= p->time) {
-						/* eh. silently ignore.
-						fprintf(stderr, "duplicate quote %s\n", c->id);
-						*/
-						free(p);
-						return;
-					} else {
-						free(c->quote);
-						c->quote = p;
-					}
-				} else {
-					c->quote = p;
-				}
-			} else {
+	c = find_commodity(xml_get_data(sp), xml_get_data(id));
+	if (c) {
+		if (c->quote) {
+			void *tm = xml_get_child(pr, "price:time");
+			p->time = gnucash_get_time(xml_get_child(tm, "ts:date"));
+			if (c->quote->time >= p->time) {
 				/* eh. silently ignore.
-				fprintf(stderr, "couldn't find commodity %s\n", xml_get_data(id));
-				*/
+				   fprintf(stderr, "duplicate quote %s\n", c->id);
+				   */
 				free(p);
 				return;
+			} else {
+				free(c->quote);
+				c->quote = p;
 			}
-		} else if (!strcmp(xml_name(data), "price:time")) {
-			p->time = gnucash_get_time(xml_get_child(data, "ts:date"));
-		} else if (!strcmp(xml_name(data), "price:value")) {
-			p->value = gnucash_get_value(xml_get_data(data));
+		} else {
+			c->quote = p;
 		}
+	} else {
+		/* eh. silently ignore.
+		   fprintf(stderr, "couldn't find commodity %s\n", xml_get_data(id));
+		   */
+		free(p);
+		return;
 	}
+
+	data = xml_get_child(pr, "price:time");
+	p->time = gnucash_get_time(xml_get_child(data, "ts:date"));
+
+	data = xml_get_child(pr, "price:value");
+	p->value = gnucash_get_value(xml_get_data(data));
 
 	/*
 	printf("%s had price %.02f at %s", c->name, p->value, ctime(&p->time));
@@ -242,59 +238,53 @@ find_account(char *guid, list *l)
 static void
 gnucash_add_account(void *acc)
 {
-	list *children = xml_get_children(acc);
 	account *a;
-
-	if (!children)
-		bail("No children in account?\n");
+	void *data;
 
 	a = calloc(sizeof (account), 1);
 	if (!a)
 		bail("can't calloc!\n");
 
-	while (children) {
-		void *data = children->data;
-		children = children->next;
+	data = xml_get_child(acc, "act:name");
+	if (!data || !xml_get_data(data))
+		bail("Account with no name?\n");
+	a->name = strdup(xml_get_data(data));
 
-		if (!strcmp(xml_name(data), "act:name")) {
-			a->name = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "act:id")) {
-			a->id = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "act:type")) {
-			a->type = gnucash_get_type(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "act:commodity")) {
-			void *sp = xml_get_child(data, "cmdty:space");
-			void *id = xml_get_child(data, "cmdty:id");
-			commodity *c = find_commodity(xml_get_data(sp), xml_get_data(id));
-			if (c) {
-				a->commodity = c;
-			} else {
-				/*
-				printf("Unable to find commodity %s/%s, will assume USD\n",
-						xml_get_data(sp), xml_get_data(id));
-				*/
-			}
-		} else if (!strcmp(xml_name(data), "act:commodity-scu")) {
-			/* we don't care about this */
-		} else if (!strcmp(xml_name(data), "act:non-standard-scu")) {
-			/* why does gnucash do it this way? */
-		} else if (!strcmp(xml_name(data), "act:description")) {
-			a->description = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "act:slots")) {
-			/* XXX: this will probably become necessary later */
-		} else if (!strcmp(xml_name(data), "act:parent")) {
-			a->parent = find_account(xml_get_data(data), accounts);
-			if (!a->parent)
-				bail("Couldn't find parent %s for %s\n", xml_get_data(data),
-					 a->name);
-			a->parent->subs = list_append(a->parent->subs, a);
-		} else {
-			bail("Unknown data %s in account\n", xml_name(data));
-		}
+	data = xml_get_child(acc, "act:id");
+	if (!data || !xml_get_data(data))
+		bail("Account with no id?\n");
+	a->id = strdup(xml_get_data(data));
+
+	data = xml_get_child(acc, "act:type");
+	if (!data || !xml_get_data(data))
+		bail("Account with no type?\n");
+	a->type = gnucash_get_type(xml_get_data(data));
+
+	data = xml_get_child(acc, "act:parent");
+	if (data) {
+		a->parent = find_account(xml_get_data(data), accounts);
+		if (!a->parent)
+			bail("Couldn't find parent %s for %s\n", xml_get_data(data),
+				 a->name);
+		a->parent->subs = list_append(a->parent->subs, a);
+	} else {
+		accounts = list_append(accounts, a);
 	}
 
-	if (!a->parent)
-		accounts = list_append(accounts, a);
+	data = xml_get_child(acc, "act:commodity");
+	if (data) {
+		void *sp = xml_get_child(data, "cmdty:space");
+		void *id = xml_get_child(data, "cmdty:id");
+		commodity *c;
+
+		if (!sp || !id)
+			bail("Commodity used by account %s is bogus!\n", a->id);
+
+		if ((c = find_commodity(xml_get_data(sp), xml_get_data(id))) != NULL)
+			a->commodity = c;
+	}
+
+	/* we should probably handle other things as well... */
 }
 
 static void
@@ -334,95 +324,108 @@ gnucash_trans_cmp(const void *one, const void *two)
 static void
 gnucash_add_split(transaction *t, void *sp)
 {
-	list *children = xml_get_children(sp);
+	void *data;
 	split *s;
-
-	if (!children)
-		bail("No children in splits?\n");
 
 	s = calloc(sizeof (split), 1);
 	if (!s)
 		bail("can't calloc!\n");
 
-	while (children) {
-		void *data = children->data;
-		children = children->next;
+	t->splits = list_append(t->splits, s);
 
-		if (!strcmp(xml_name(data), "split:id")) {
-			/* honestly, does everything need a guid */
-		} else if (!strcmp(xml_name(data), "split:memo")) {
-			s->memo = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "split:reconciled-state")) {
-			s->recstate = *xml_get_data(data);
-		} else if (!strcmp(xml_name(data), "split:reconcile-date")) {
-			s->recdate = gnucash_get_time(xml_get_child(data, "ts:date"));
-		} else if (!strcmp(xml_name(data), "split:value")) {
-			s->value = gnucash_get_value(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "split:quantity")) {
-			s->quantity = gnucash_get_value(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "split:account")) {
-			account *a = find_account(xml_get_data(data), accounts);
-			if (!a)
-				bail("Split for non-account (%s)?\n", xml_get_data(data));
-			if (!list_find(a->transactions, t)) {
-				a->transactions =
-					list_insert_sorted(a->transactions, t, gnucash_trans_cmp);
-				a->quantity += s->quantity;
-			}
-			s->account = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "split:action")) {
-			s->action = strdup(xml_get_data(data));
-		} else {
-			bail("Unknown data %s in split\n", xml_name(data));
-		}
+	data = xml_get_child(sp, "split:memo");
+	if (data && xml_get_data(data))
+		s->memo = strdup(xml_get_data(data));
+
+	data = xml_get_child(sp, "split:reconciled-state");
+	if (!data || !xml_get_data(data))
+		bail("Split without reconciled state?\n");
+	s->recstate = *xml_get_data(data);
+
+	data = xml_get_child(sp, "split:reconcile-date");
+	if (data && xml_get_data(data)) {
+		if (!xml_get_child(data, "ts:date"))
+			bail("reconcile-date without date?\n");
+		s->recdate = gnucash_get_time(xml_get_child(data, "ts:date"));
 	}
 
-	t->splits = list_append(t->splits, s);
+	data = xml_get_child(sp, "split:value");
+	if (!data || !xml_get_data(data))
+		bail("Split without reconciled value?\n");
+	s->value = gnucash_get_value(xml_get_data(data));
+
+	data = xml_get_child(sp, "split:quantity");
+	if (!data || !xml_get_data(data))
+		bail("Split without reconciled quantity?\n");
+	s->quantity = gnucash_get_value(xml_get_data(data));
+
+	data = xml_get_child(sp, "split:account");
+	if (data && xml_get_data(data)) {
+		account *a = find_account(xml_get_data(data), accounts);
+		if (!a)
+			bail("Split for non-account (%s)?\n", xml_get_data(data));
+		if (!list_find(a->transactions, t)) {
+			a->transactions =
+				list_insert_sorted(a->transactions, t, gnucash_trans_cmp);
+			a->quantity += s->quantity;
+		}
+		s->account = strdup(xml_get_data(data));
+	} else {
+		bail("Split without reconciled account?\n");
+	}
 }
 
 static void
 gnucash_add_transaction(void *trans)
 {
-	list *children = xml_get_children(trans);
 	transaction *t;
-
-	if (!children)
-		bail("No children in transaction?\n");
+	void *data;
 
 	t = calloc(sizeof (transaction), 1);
 	if (!t)
 		bail("can't calloc!\n");
 
-	while (children) {
-		void *data = children->data;
-		children = children->next;
-
-		if (!strcmp(xml_name(data), "trn:id")) {
-			/* is this really necessary? */
-		} else if (!strcmp(xml_name(data), "trn:currency")) {
-		} else if (!strcmp(xml_name(data), "trn:num")) {
-			t->num = strtol(xml_get_data(data), NULL, 0);
-		} else if (!strcmp(xml_name(data), "trn:date-posted")) {
-			t->posted = gnucash_get_time(xml_get_child(data, "ts:date"));
-		} else if (!strcmp(xml_name(data), "trn:date-entered")) {
-			t->entered = gnucash_get_time(xml_get_child(data, "ts:date"));
-		} else if (!strcmp(xml_name(data), "trn:description")) {
-			if (xml_get_data(data))
-				t->description = strdup(xml_get_data(data));
-		} else if (!strcmp(xml_name(data), "trn:splits")) {
-			list *splits = xml_get_children(data);
-			while (splits) {
-				if (strcmp(xml_name(splits->data), "trn:split"))
-					bail("non-split (%s) in splits?\n", xml_name(splits->data));
-				gnucash_add_split(t, splits->data);
-				splits = splits->next;
-			}
-		} else {
-			bail("Unknown data %s in transaction\n", xml_name(data));
-		}
-	}
-
 	transactions = list_append(transactions, t);
+
+	data = xml_get_child(trans, "trn:id");
+	if (!data || !xml_get_data(data))
+		bail("Transaction without id?\n");
+	t->id = strdup(xml_get_data(data));
+
+	data = xml_get_child(trans, "trn:num");
+	if (data && xml_get_data(data))
+		t->num = strtol(xml_get_data(data), NULL, 0);
+
+	data = xml_get_child(trans, "trn:date-posted");
+	if (!data || !xml_get_data(data))
+		bail("Transaction %s without date-posted?\n", t->id);
+	if (!xml_get_child(data, "ts:date"))
+		bail("Date-Posted (%s) without date?\n", t->id);
+	t->posted = gnucash_get_time(xml_get_child(data, "ts:date"));
+
+	data = xml_get_child(trans, "trn:date-entered");
+	if (!data || !xml_get_data(data))
+		bail("Transaction %s without date-entered?\n", t->id);
+	if (!xml_get_child(data, "ts:date"))
+		bail("Date-Entered (%s) without date?\n", t->id);
+	t->entered = gnucash_get_time(xml_get_child(data, "ts:date"));
+
+	data = xml_get_child(trans, "trn:description");
+	if (data && xml_get_data(data))
+		t->description = strdup(xml_get_data(data));
+
+	data = xml_get_child(trans, "trn:splits");
+	if (data) {
+		list *splits = xml_get_children(data);
+		while (splits) {
+			if (strcmp(xml_name(splits->data), "trn:split"))
+				bail("non-split (%s) in splits?\n", xml_name(splits->data));
+			gnucash_add_split(t, splits->data);
+			splits = splits->next;
+		}
+	} else {
+		bail("Transaction without splits?\n");
+	}
 }
 
 static void
