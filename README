@@ -57,6 +57,8 @@
 
    ^R		- reload from file
 
+   In the subaccounts or general ledger, splits are always skipped.
+
    If you are not looking at the subaccounts or general ledger, you can also
    use these keys to interact with splits:
 
