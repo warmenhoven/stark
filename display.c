@@ -880,10 +880,6 @@ jump_split(split *s)
 	curr_acct = a;
 	curr_acct->selected = 1;
 
-	while ((a = a->parent) != NULL)
-		a->expanded = 1;
-	recalc_skip_acct();
-
 	l = list_find(curr_acct->transactions, curr_trans);
 	assert(l);
 	nlen = list_length(l->next);
@@ -908,6 +904,7 @@ jump_split(split *s)
 static int
 detail_handle_key(int c)
 {
+	account *a;
 	list *l;
 
 	if (!curr_trans && c != 'q') {
@@ -919,6 +916,12 @@ detail_handle_key(int c)
 		display_mode = ACCT_LIST;
 		if (curr_trans)
 			curr_trans->expanded = 0;
+
+		a = curr_acct;
+		while ((a = a->parent) != NULL)
+			a->expanded = 1;
+		recalc_skip_acct();
+
 		clear();
 		redraw_screen();
 		break;
