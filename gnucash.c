@@ -596,6 +596,8 @@ gnucash_parse_book(void *book)
 			/* XXX */
 		} else if (!strcmp(xml_name(child), "gnc:GncVendor")) {
 			/* XXX */
+		} else if (!strcmp(xml_name(child), "gnc:GncInvoice")) {
+			/* XXX */
 
 		} else if (!strcmp(xml_name(child), "gnc:count-data")) {
 			/* we don't really need to do anything here either. i guess we could
