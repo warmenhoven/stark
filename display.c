@@ -13,6 +13,8 @@ static list *disp_acct = NULL;
 static account *curr_acct = NULL;
 
 static int skip_trans = 0;
+static list *disp_trans = NULL;
+static transaction *curr_trans = NULL;
 
 static int
 build_exp_accts(list *accts, list **l)
@@ -325,6 +327,9 @@ draw_transactions()
 	float balance = 0;
 	int line = 3;
 
+	list_free(disp_trans);
+	disp_trans = NULL;
+
 	while (i--) {
 		transaction *t = l->data;
 		balance += trans_balance(t, curr_acct);
@@ -334,6 +339,7 @@ draw_transactions()
 	while (l && line < LINES) {
 		transaction *t = l->data;
 		draw_trans(t, line++, balance);
+		disp_trans = list_append(disp_trans, t);
 		balance += trans_balance(t, curr_acct);
 		l = l->next;
 	}
@@ -515,13 +521,17 @@ init_trans()
 	list *l = curr_acct->transactions;
 	int i = 0;
 
+	curr_trans = NULL;
+
 	while (l) {
 		transaction *t = l->data;
 		l = l->next;
-		if (l)
+		if (l) {
 			t->selected = 0;
-		else
+		} else {
 			t->selected = 1;
+			curr_trans = t;
+		}
 		i++;
 	}
 
@@ -539,16 +549,17 @@ list_handle_key(int c)
 	list *l;
 
 	switch (c) {
-	case 12:	/* ^L */
-		clear();
-		redraw_screen();
-		break;
+	case 'q':
+		return 1;
+
 	case 13:	/* ^M */
 		display_mode = ACCT_DETAIL;
 		clear();
 		init_trans();
 		redraw_screen();
 		break;
+
+	/* MOTION */
 	case 'h':
 	case KEY_LEFT:
 		if (!curr_acct->parent)
@@ -614,8 +625,40 @@ list_handle_key(int c)
 			}
 		}
 		break;
-	case 'q':
-		return 1;
+	case 1:		/* ^A */
+	case KEY_HOME:
+		curr_acct->selected = 0;
+		curr_acct = accounts->data;
+		curr_acct->selected = 1;
+		skip_acct = 0;
+		redraw_screen();
+		break;
+	case 5:		/* ^E */
+	case KEY_END:
+		curr_acct->selected = 0;
+
+		l = accounts;
+		do {
+			while (l->next) l = l->next;
+			ta = l->data;
+			l = ta->subs;
+		} while (l && ta->expanded);
+
+		if (!list_find(disp_acct, ta)) {
+			account *a = curr_acct;
+			do {
+				a = select_next_acct(a);
+				if (!list_find(disp_acct, a))
+					skip_acct++;
+			} while (a != ta);
+		}
+
+		curr_acct = ta;
+		curr_acct->selected = 1;
+		redraw_screen();
+		break;
+
+	/* EXPANSION */
 	case '-':
 		if (curr_acct->subs) {
 			int s = 0;
@@ -677,38 +720,7 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
-	case 1:		/* ^A */
-	case KEY_HOME:
-		curr_acct->selected = 0;
-		curr_acct = accounts->data;
-		curr_acct->selected = 1;
-		skip_acct = 0;
-		redraw_screen();
-		break;
-	case 5:		/* ^E */
-	case KEY_END:
-		curr_acct->selected = 0;
 
-		l = accounts;
-		do {
-			while (l->next) l = l->next;
-			ta = l->data;
-			l = ta->subs;
-		} while (l && ta->expanded);
-
-		if (!list_find(disp_acct, ta)) {
-			account *a = curr_acct;
-			do {
-				a = select_next_acct(a);
-				if (!list_find(disp_acct, a))
-					skip_acct++;
-			} while (a != ta);
-		}
-
-		curr_acct = ta;
-		curr_acct->selected = 1;
-		redraw_screen();
-		break;
 	default:
 		break;
 	}
@@ -719,13 +731,78 @@ list_handle_key(int c)
 static int
 detail_handle_key(int c)
 {
+	list *l;
+
+	if (!curr_trans && c != 'q') {
+		return 0;
+	}
+
 	switch (c) {
 	case 'q':
 		display_mode = ACCT_LIST;
 		clear();
 		redraw_screen();
 		break;
+
+	/* MOTION */
+	case KEY_DOWN:
+	case 'j':
+	case 14:	/* ^N */
+		l = list_find(disp_trans, curr_trans);
+		if (l->next) {
+			curr_trans->selected = 0;
+			curr_trans = l->next->data;
+			curr_trans->selected = 1;
+			redraw_screen();
+		} else {
+			l = list_find(curr_acct->transactions, curr_trans);
+			if (l->next) {
+				skip_trans++;
+				curr_trans->selected = 0;
+				curr_trans = l->next->data;
+				curr_trans->selected = 1;
+				redraw_screen();
+			}
+		}
+		break;
+	case KEY_UP:
+	case 'k':
+	case 16:	/* ^P */
+		l = list_find(disp_trans, curr_trans);
+		if (l && l->prev) {
+			curr_trans->selected = 0;
+			curr_trans = l->prev->data;
+			curr_trans->selected = 1;
+			redraw_screen();
+		} else {
+			l = list_find(curr_acct->transactions, curr_trans);
+			if (l->prev) {
+				skip_trans--;
+				curr_trans->selected = 0;
+				curr_trans = l->prev->data;
+				curr_trans->selected = 1;
+				redraw_screen();
+			}
+		}
+		break;
+	case KEY_HOME:
+	case 1:		/* ^A */
+		curr_trans->selected = 0;
+		curr_trans = curr_acct->transactions->data;
+		curr_trans->selected = 1;
+		skip_trans = 0;
+		redraw_screen();
+		break;
+	case KEY_END:
+	case 5:		/* ^E */
+		init_trans();
+		redraw_screen();
+		break;
+
+	default:
+		break;
 	}
+
 	return 0;
 }
 
@@ -757,6 +834,10 @@ display_run()
 			endwin();
 			initscr();
 			recalc_skip_acct();
+			clear();
+			redraw_screen();
+			continue;
+		} else if (c == 12) {	/* ^L */
 			clear();
 			redraw_screen();
 			continue;
