@@ -173,9 +173,12 @@ recalc_skip()
 }
 
 static void
-draw_acct(account *a, int line, int depth, list *l)
+draw_acct(account *a, int line)
 {
+	account *dfind = a;
 	char value[1024];
+	int sibling = 0;
+	int depth = 0;
 	int dlen = 0;
 	int i;
 
@@ -183,6 +186,11 @@ draw_acct(account *a, int line, int depth, list *l)
 
 	if (a->selected)
 		attron(A_REVERSE);
+
+	while (dfind->parent) {
+		dfind = dfind->parent;
+		depth++;
+	}
 
 	for (i = depth; i > 0; i--) {
 		account *parent = a->parent, *child = a;
@@ -208,12 +216,18 @@ draw_acct(account *a, int line, int depth, list *l)
 		dlen += 2;
 	}
 
+	if (a->parent) {
+		list *l = list_find(a->parent->subs, a);
+		if (l->next)
+			sibling = 1;
+	}
+
 	if (a->subs) {
 		if (a->expanded)
 			addch('-');
 		else
 			addch('+');
-	} else if (l) {
+	} else if (sibling) {
 		addch(ACS_LTEE);
 	} else {
 		addch(ACS_LLCORNER);
@@ -252,14 +266,14 @@ draw_acct(account *a, int line, int depth, list *l)
 }
 
 static void
-draw_accts(list *l, int depth, int *line, int *s)
+draw_accts(list *l, int *line, int *s)
 {
 	while (l) {
 		account *a = l->data;
 		l = l->next;
 
 		if (!*s) {
-			draw_acct(a, (*line)++, depth, l);
+			draw_acct(a, (*line)++);
 
 			disp_acct = list_append(disp_acct, a);
 
@@ -270,7 +284,7 @@ draw_accts(list *l, int depth, int *line, int *s)
 		}
 
 		if (a->expanded) {
-			draw_accts(a->subs, depth + 1, line, s);
+			draw_accts(a->subs, line, s);
 
 			if (*line >= LINES)
 				return;
@@ -346,7 +360,7 @@ redraw_screen()
 	case ACCT_LIST:
 		list_free(disp_acct);
 		disp_acct = NULL;
-		draw_accts(accounts, 0, &line, &s);
+		draw_accts(accounts, &line, &s);
 		break;
 	case ACCT_DETAIL:
 		draw_trans();
