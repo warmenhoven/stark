@@ -344,13 +344,23 @@ draw_trans(transaction *t, int line, double total)
 	mvaddstr(line, 41, "   ");
 
 	if (list_length(t->splits) > 2) {
+		list *l;
 		mvaddstr(line, 44, "- Split Transaction -");
-	} else if (!t->splits->next) {
-		mvaddstr(line, 44, "                     ");
+		l = t->splits;
+		while (l) {
+			split *s = l->data;
+			l = l->next;
+			if (!strcmp(s->account, curr_acct->id)) {
+				mvaddch(line, 69, s->recstate);
+				break;
+			}
+		}
 	} else {
 		account *a;
 		split *s = t->splits->data;
 		split *o = t->splits->data;
+
+		assert(t->splits->next);
 
 		if (!strcmp(s->account, curr_acct->id))
 			s = t->splits->next->data;
