@@ -148,7 +148,7 @@ draw_acct(account *a, int line)
 }
 
 static void
-draw_accounts()
+draw_accounts(void)
 {
 	list *expd = NULL, *l;
 	int i;
@@ -166,7 +166,7 @@ draw_accounts()
 }
 
 static void
-draw_trans_header()
+draw_trans_header(void)
 {
 	int i, j = 0;
 
@@ -320,7 +320,7 @@ draw_trans(transaction *t, int line, float total)
 }
 
 static void
-draw_transactions()
+draw_transactions(void)
 {
 	list *l = curr_acct->transactions;
 	int i = skip_trans;
@@ -346,7 +346,7 @@ draw_transactions()
 }
 
 static void
-redraw_screen()
+redraw_screen(void)
 {
 	switch (display_mode) {
 	case ACCT_LIST:
@@ -489,7 +489,7 @@ select_prev_acct(account *a)
 }
 
 static void
-recalc_skip_acct()
+recalc_skip_acct(void)
 {
 	list *expd = NULL;
 	list *l;
@@ -516,7 +516,7 @@ recalc_skip_acct()
 }
 
 static void
-init_trans()
+init_trans(void)
 {
 	list *l = curr_acct->transactions;
 	int i = 0;

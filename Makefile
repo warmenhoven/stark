@@ -10,6 +10,9 @@ NITPICKY_WARNINGS = -W \
 		    -Wcast-qual \
 		    -Wcast-align \
 		    -Wwrite-strings \
+		    -Wsign-compare \
+		    -Waggregate-return \
+		    -Wstrict-prototypes \
 		    -ansi \
 		    -pedantic
 

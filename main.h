@@ -73,6 +73,6 @@ extern account *find_account(char *, list *);
 
 extern void gnucash_init(char *);
 
-extern void display_run();
+extern void display_run(void);
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */
