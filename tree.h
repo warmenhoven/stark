@@ -2,9 +2,11 @@
 #define tree_h
 
 typedef struct _tree {
-	struct _tree *prev;
-	struct _tree *next;
+	struct _tree *left;
+	struct _tree *right;
+	struct _tree *parent;
 	void *data;
+	int red;
 } tree;
 
 /* returns > 1 if a > b */

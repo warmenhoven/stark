@@ -2,7 +2,7 @@ CC = gcc
 LDLIBS = -lcurses -lexpat
 
 ifneq "$(DEBUG)" ""
-CFLAGS += -g -DDEBUG
+CFLAGS += -g3 -DDEBUG -O0
 endif
 
 ifneq "$(PICKY)" ""
@@ -34,7 +34,9 @@ endif
 ifneq "$(PERF)" ""
 CFLAGS += -fprofile-arcs -ftest-coverage -O0
 else
+ifeq "$(DEBUG)" ""
 CFLAGS += -O3
+endif
 endif
 
 TARGET = stark
