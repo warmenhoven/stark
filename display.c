@@ -107,6 +107,25 @@ select_prev_acct(account *a)
 	}
 }
 
+static float
+get_value(account *a)
+{
+	float total = 0;
+	list *l = a->subs;
+
+	if (a->commodity && a->commodity->quote)
+			total = a->quantity * a->commodity->quote->value;
+	else if (!a->commodity)
+		total += a->quantity;
+
+	while (l) {
+		total += get_value(l->data);
+		l = l->next;
+	}
+
+	return total;
+}
+
 static void
 draw_accts(list *l, int depth, int *line, int *s)
 {
@@ -117,6 +136,9 @@ draw_accts(list *l, int depth, int *line, int *s)
 		l = l->next;
 
 		if (!*s) {
+			char value[1024];
+			int dlen = 0;
+
 			move((*line)++, 0);
 
 			if (a->selected)
@@ -143,6 +165,7 @@ draw_accts(list *l, int depth, int *line, int *s)
 				else
 					addch(' ');
 				addch(' ');
+				dlen += 2;
 			}
 
 			if (a->subs) {
@@ -156,9 +179,31 @@ draw_accts(list *l, int depth, int *line, int *s)
 				addch(ACS_LLCORNER);
 			}
 			addch(' ');
+			dlen += 2;
 			addstr(a->name);
+			dlen += strlen(a->name);
 
-			for (i = 0; i < COLS - strlen(a->name) - (2 * (depth + 1)); i++)
+			for (; dlen < 40; dlen++)
+				addch(' ');
+
+			if (a->commodity) {
+				char quant[1024];
+				dlen += sprintf(quant, "%.3f %s", a->quantity, a->commodity->id);
+				addstr(quant);
+			}
+
+			for (; dlen < 65; dlen++)
+				addch(' ');
+
+			addch('$');
+			dlen++;
+			dlen += sprintf(value, "%.2f", get_value(a));
+
+			for (; dlen < 80; dlen++)
+				addch(' ');
+			addstr(value);
+
+			for (; dlen < COLS; dlen++)
 				addch(' ');
 
 			if (a->selected)
