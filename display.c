@@ -516,6 +516,27 @@ recalc_skip_acct(void)
 }
 
 static void
+recalc_skip_trans(void)
+{
+	list *l;
+	int len;
+	int i;
+
+	if (display_mode == ACCT_LIST)
+		return;
+
+	len = list_length(curr_acct->transactions);
+
+	l = list_find(curr_acct->transactions, curr_trans);
+	i = list_length(l->next);
+
+	if ((len - skip_trans) - i < LINES)
+		return;
+
+	skip_trans = len - LINES - i;
+}
+
+static void
 init_trans(void)
 {
 	list *l = curr_acct->transactions;
@@ -834,6 +855,7 @@ display_run()
 			endwin();
 			initscr();
 			recalc_skip_acct();
+			recalc_skip_trans();
 			clear();
 			redraw_screen();
 			continue;
