@@ -238,6 +238,9 @@ redraw_screen()
 		draw_accts(accounts, 0, &line, &s);
 		break;
 	case ACCT_DETAIL:
+#if 0
+		date | num | description    | transfer    | r | inc | dec | balance
+#endif
 		break;
 	}
 
@@ -279,7 +282,7 @@ close_all(account *a)
 	a->expanded = 0;
 
 	while (l) {
-		expand_all(l->data);
+		close_all(l->data);
 		l = l->next;
 	}
 }
@@ -301,6 +304,7 @@ list_handle_key(int c)
 		redraw_screen();
 		break;
 	case 'h':
+	case KEY_LEFT:
 		if (!curr_acct->parent)
 			break;
 
@@ -323,6 +327,7 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
+	case KEY_DOWN:
 	case 'j':
 		l = list_find(disp_acct, curr_acct);
 		if (l && l->next) {
@@ -342,6 +347,7 @@ list_handle_key(int c)
 			}
 		}
 		break;
+	case KEY_UP:
 	case 'k':
 		l = list_find(disp_acct, curr_acct);
 		if (l && l->prev) {
@@ -377,6 +383,7 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
+	case KEY_RIGHT:
 	case '+':
 		if (curr_acct->subs) {
 			curr_acct->expanded = 1;
