@@ -484,7 +484,7 @@ gnucash_process(void *top)
 	list *child;
 
 	if (strcmp(xml_name(top), "gnc-v2"))
-		bail("Don't understand gnucash data (%s)\n", xml_name(top));
+		bail("I don't understand gnucash data (%s)\n", xml_name(top));
 
 	child = xml_get_children(top);
 	if (!child)
@@ -566,11 +566,11 @@ gnucash_init(char *filename)
 	XML_SetCharacterDataHandler(parser, gnucash_chardata);
 
 	if (!(f = fopen(filename, "r")))
-		bail("unable to open %s\n", filename);
+		bail("Unable to open %s\n", filename);
 
 	while (fgets(line, sizeof (line), f))
 		if (!XML_Parse(parser, line, strlen(line), 0))
-			bail("unable to parse %s\n", filename);
+			bail("Unable to parse %s\n", filename);
 
 	fclose(f);
 	XML_ParserFree(parser);
