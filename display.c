@@ -173,87 +173,93 @@ recalc_skip()
 }
 
 static void
-draw_accts(list *l, int depth, int *line, int *s)
+draw_acct(account *a, int line, int depth, list *l)
 {
+	char value[1024];
+	int dlen = 0;
 	int i;
 
+	move(line, 0);
+
+	if (a->selected)
+		attron(A_REVERSE);
+
+	for (i = depth; i > 0; i--) {
+		account *parent = a->parent, *child = a;
+		list *x;
+		int j;
+
+		for (j = 0; j < i; j++) {
+			child = parent;
+			parent = child->parent;
+		}
+
+		if (parent) {
+			x = list_find(parent->subs, child);
+		} else {
+			x = list_find(accounts, child);
+		}
+
+		if (x->next)
+			addch(ACS_VLINE);
+		else
+			addch(' ');
+		addch(' ');
+		dlen += 2;
+	}
+
+	if (a->subs) {
+		if (a->expanded)
+			addch('-');
+		else
+			addch('+');
+	} else if (l) {
+		addch(ACS_LTEE);
+	} else {
+		addch(ACS_LLCORNER);
+	}
+	addch(' ');
+	dlen += 2;
+	addstr(a->name);
+	dlen += strlen(a->name);
+
+	for (; dlen < 40; dlen++)
+		addch(' ');
+
+	if (a->commodity) {
+		char quant[1024];
+		dlen += sprintf(quant, "%.3f %s", a->quantity, a->commodity->id);
+		addstr(quant);
+	}
+
+	for (; dlen < 65; dlen++)
+		addch(' ');
+
+	addch('$');
+	dlen++;
+
+	dlen += sprintf(value, "%.2f", get_value(a));
+	for (; dlen < 80; dlen++)
+		addch(' ');
+	addstr(value);
+
+	/* can't use clrtoeol() because we want A_REVERSE to eol */
+	for (; dlen < COLS; dlen++)
+		addch(' ');
+
+	if (a->selected)
+		attroff(A_REVERSE);
+}
+
+static void
+draw_accts(list *l, int depth, int *line, int *s)
+{
 	while (l) {
 		account *a = l->data;
 		l = l->next;
 
 		if (!*s) {
-			char value[1024];
-			int dlen = 0;
-
-			move((*line)++, 0);
-
-			if (a->selected)
-				attron(A_REVERSE);
-
-			for (i = depth; i > 0; i--) {
-				account *parent = a->parent, *child = a;
-				list *x;
-				int j;
-
-				for (j = 0; j < i; j++) {
-					child = parent;
-					parent = child->parent;
-				}
-
-				if (parent) {
-					x = list_find(parent->subs, child);
-				} else {
-					x = list_find(accounts, child);
-				}
-
-				if (x->next)
-					addch(ACS_VLINE);
-				else
-					addch(' ');
-				addch(' ');
-				dlen += 2;
-			}
-
-			if (a->subs) {
-				if (a->expanded)
-					addch('-');
-				else
-					addch('+');
-			} else if (l) {
-				addch(ACS_LTEE);
-			} else {
-				addch(ACS_LLCORNER);
-			}
-			addch(' ');
-			dlen += 2;
-			addstr(a->name);
-			dlen += strlen(a->name);
-
-			for (; dlen < 40; dlen++)
-				addch(' ');
-
-			if (a->commodity) {
-				char quant[1024];
-				dlen += sprintf(quant, "%.3f %s", a->quantity, a->commodity->id);
-				addstr(quant);
-			}
-
-			for (; dlen < 65; dlen++)
-				addch(' ');
-
-			addch('$');
-			dlen++;
-
-			dlen += sprintf(value, "%.2f", get_value(a));
-			for (; dlen < 80; dlen++)
-				addch(' ');
-			addstr(value);
-
-			for (; dlen < COLS; dlen++)
-				addch(' ');
-
-			if (a->selected)
-				attroff(A_REVERSE);
+			draw_acct(a, (*line)++, depth, l);
 
 			disp_acct = list_append(disp_acct, a);
 
