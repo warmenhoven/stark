@@ -9,27 +9,48 @@ BINDIR = bin
 DATADIR = share
 
 ifneq "$(PICKY)" ""
-NITPICKY_WARNINGS = -Werror \
-		    -Wall \
+NITPICKY_WARNINGS = \
 		    -W \
-		    -Wundef \
-		    -Wendif-labels \
-		    -Wshadow \
-		    -Wpointer-arith \
-		    -Wcast-qual \
-		    -Wcast-align \
-		    -Wwrite-strings \
-		    -Wsign-compare \
 		    -Waggregate-return \
-		    -Wstrict-prototypes \
-		    -Wmissing-prototypes \
-		    -Wmissing-declarations \
-		    -Wpadded \
-		    -Wredundant-decls \
-		    -Wnested-externs \
+		    -Wall \
+		    -Wbad-function-cast \
+		    -Wcast-align \
+		    -Wcast-qual \
+		    -Wchar-subscripts \
+		    -Wcomment \
+		    -Wendif-labels \
+		    -Werror \
+		    -Wfloat-equal \
+		    -Wformat=2 \
+		    -Wimplicit \
 		    -Winline \
+		    -Wmain \
+		    -Wmissing-braces \
+		    -Wmissing-declarations \
+		    -Wmissing-prototypes \
+		    -Wmissing-noreturn \
+		    -Wnested-externs \
+		    -Wnonnull \
+		    -Wpadded \
+		    -Wparentheses \
+		    -Wpointer-arith \
+		    -Wredundant-decls \
+		    -Wreturn-type \
+		    -Wsequence-point \
+		    -Wshadow \
+		    -Wsign-compare \
+		    -Wstrict-aliasing \
+		    -Wstrict-prototypes \
+		    -Wswitch \
+		    -Wswitch-enum \
+		    -Wtrigraphs \
+		    -Wundef \
+		    -Wuninitialized \
+		    -Wunknown-pragmas \
+		    -Wunused \
+		    -Wwrite-strings \
+		    -pedantic \
 		    -std=c99 \
-		    -pedantic
 
 CFLAGS += $(NITPICKY_WARNINGS)
 endif

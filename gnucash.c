@@ -24,7 +24,7 @@ char *book_guid = NULL;
 
 static tree *acct_tree = NULL;
 
-static void ATTRIBUTE_PRINTF_1
+static void ATTRIBUTE_PRINTF_1 ATTRIBUTE_NORETURN
 bail(const char *f, ...)
 {
 	va_list ap;
