@@ -1,7 +1,12 @@
 CC = gcc
 LDLIBS = -lcurses -lexpat
-CFLAGS += -g -Wall -Werror
 
+ifneq "$(DEBUG)" ""
+CFLAGS += -g -DDEBUG
+endif
+
+ifneq "$(PICKY)" ""
+CFLAGS += -Wall -Werror
 NITPICKY_WARNINGS = -W \
 		    -Wundef \
 		    -Wendif-labels \
@@ -23,6 +28,7 @@ NITPICKY_WARNINGS = -W \
 		    -pedantic
 
 CFLAGS += $(NITPICKY_WARNINGS)
+endif
 
 OBJS = display.o gnucash.o list.o main.o xml.o
 
@@ -37,6 +43,7 @@ TARGET = stark
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
 
+# yeah, i know, this isn't strictly correct. so shoot me. they're small files.
 $(OBJS): list.h main.h xml.h
 
 clean:
