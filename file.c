@@ -270,7 +270,7 @@ print_slots(FILE *f, account *a)
 		fprintf(f, "    <slot>\n");
 		fprintf(f, "      <slot:key>notes</slot:key>\n");
 		fprintf(f, "      <slot:value type=\"string\">%s</slot:value>\n",
-				a->notes);
+				a->notes ? a->notes : "");
 		fprintf(f, "    </slot>\n");
 	}
 
