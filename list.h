@@ -14,7 +14,7 @@ typedef int (*cmpfunc)(const void *, const void *);
 
 extern list *list_new(void *);
 extern unsigned int list_length(list *);
-extern void *list_nth(list *, int);
+extern list *list_nth(list *, int);
 extern list *list_find(list *, void *);
 extern list *list_append(list *, void *);
 extern list *list_prepend(list *, void *);

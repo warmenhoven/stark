@@ -266,34 +266,25 @@ draw_acct(account *a, int line)
 }
 
 static void
-draw_accts(list *l, int *line, int *s)
+draw_accounts()
 {
-	while (l) {
-		account *a = l->data;
+	list *exp = NULL, *l;
+	int i;
+
+	build_exp_accts(accounts, &exp);
+	l = list_nth(exp, skip);
+
+	for (i = 0; l && i < LINES; i++) {
+		disp_acct = list_append(disp_acct, l->data);
+		draw_acct(l->data, i);
 		l = l->next;
-
-		if (!*s) {
-			draw_acct(a, (*line)++);
-
-			disp_acct = list_append(disp_acct, a);
-
-			if (*line >= LINES)
-				return;
-		} else {
-			(*s)--;
-		}
-
-		if (a->expanded) {
-			draw_accts(a->subs, line, s);
-
-			if (*line >= LINES)
-				return;
-		}
 	}
+
+	list_free(exp);
 }
 
 static void
-draw_trans()
+draw_trans_header()
 {
 	int i, j = 0;
 
@@ -349,21 +340,28 @@ draw_trans()
 	j += i + 1;
 	for (; j < COLS; j++)
 		addch(ACS_HLINE);
+
+	for (i = 0; i < COLS; i++)
+		addch(ACS_HLINE);
+}
+
+static void
+draw_tranactions()
+{
 }
 
 static void
 redraw_screen()
 {
-	int line = 0, s = skip;
-
 	switch (display_mode) {
 	case ACCT_LIST:
 		list_free(disp_acct);
 		disp_acct = NULL;
-		draw_accts(accounts, &line, &s);
+		draw_accounts();
 		break;
 	case ACCT_DETAIL:
-		draw_trans();
+		draw_trans_header();
+		draw_tranactions();
 		break;
 	}
 

@@ -24,14 +24,14 @@ list_length(list *l)
 	return c;
 }
 
-void *
+list *
 list_nth(list *l, int n)
 {
 	while (l && n) {
 		l = l->next;
 		n--;
 	}
-	if (l) return l->data;
+	if (l) return l;
 	return NULL;
 }
 
