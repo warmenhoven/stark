@@ -18,6 +18,7 @@ NITPICKY_WARNINGS = \
 		    -Wcast-qual \
 		    -Wchar-subscripts \
 		    -Wcomment \
+		    -Wdisabled-optimization \
 		    -Wendif-labels \
 		    -Werror \
 		    -Wfloat-equal \
@@ -27,10 +28,12 @@ NITPICKY_WARNINGS = \
 		    -Wmain \
 		    -Wmissing-braces \
 		    -Wmissing-declarations \
-		    -Wmissing-prototypes \
+		    -Wmissing-format-attribute \
 		    -Wmissing-noreturn \
+		    -Wmissing-prototypes \
 		    -Wnested-externs \
 		    -Wnonnull \
+		    -Wpacked \
 		    -Wpadded \
 		    -Wparentheses \
 		    -Wpointer-arith \
