@@ -13,7 +13,6 @@
 #include "xml.h"
 
 static XML_Parser parser;
-static void *curr = NULL;
 
 list *commodities = NULL;
 list *accounts = NULL;
@@ -480,14 +479,14 @@ gnucash_parse_book(void *book)
 }
 
 static void
-gnucash_process()
+gnucash_process(void *top)
 {
 	list *child;
 
-	if (strcmp(xml_name(curr), "gnc-v2"))
-		bail("Don't understand gnucash data (%s)\n", xml_name(curr));
+	if (strcmp(xml_name(top), "gnc-v2"))
+		bail("Don't understand gnucash data (%s)\n", xml_name(top));
 
-	child = xml_get_children(curr);
+	child = xml_get_children(top);
 	if (!child)
 		bail("Empty gnucash data?\n");
 
@@ -515,6 +514,7 @@ gnucash_process()
 static void
 gnucash_start(void *data, const char *el, const char **attr)
 {
+	void *curr = *(void **)data;
 	int i;
 
 	if (curr)
@@ -530,12 +530,13 @@ static void
 gnucash_end(void *data, const char *el)
 {
 	void *parent;
+	void *curr = *(void **)data;
 
 	if (!curr)
 		return;
 
 	if (!(parent = xml_parent(curr))) {
-		gnucash_process();
+		gnucash_process(curr);
 		xml_free(curr);
 		curr = NULL;
 	} else if (!strcmp(xml_name(curr), el)) {
@@ -546,6 +547,7 @@ gnucash_end(void *data, const char *el)
 static void
 gnucash_chardata(void *data, const char *s, int len)
 {
+	void *curr = *(void **)data;
 	xml_data(curr, s, len);
 }
 
@@ -554,10 +556,12 @@ gnucash_init(char *filename)
 {
 	FILE *f = NULL;
 	char line[4096];
+	void *curr;
 
 	if (!(parser = XML_ParserCreate(NULL)))
 		bail("Unable to create parser\n");
 
+	XML_SetUserData(parser, &curr);
 	XML_SetElementHandler(parser, gnucash_start, gnucash_end);
 	XML_SetCharacterDataHandler(parser, gnucash_chardata);
 
