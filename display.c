@@ -1079,6 +1079,8 @@ detail_handle_key(int c)
 		}
 		/* fallthrough */
 	case 14:	/* ^N */
+		if (curr_trans->expanded)
+			expanded = 1;
 		unexpand_transaction();
 		l = list_find(disp_trans, curr_trans);
 		assert(l);
@@ -1133,6 +1135,8 @@ detail_handle_key(int c)
 		}
 		/* fallthrough */
 	case 16:	/* ^P */
+		if (curr_trans->expanded)
+			expanded = 1;
 		unexpand_transaction();
 		l = list_find(disp_trans, curr_trans);
 		if (l && l->prev) {
