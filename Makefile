@@ -7,56 +7,58 @@ INSTALL = install -c
 PREFIX = usr
 BINDIR = bin
 DATADIR = share
+MANDIR = $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
 
 ifneq "$(PICKY)" ""
 NITPICKY_WARNINGS = \
-		    -W \
-		    -Waggregate-return \
-		    -Wall \
-		    -Wbad-function-cast \
-		    -Wcast-align \
-		    -Wcast-qual \
-		    -Wchar-subscripts \
-		    -Wcomment \
-		    -Wdisabled-optimization \
-		    -Wendif-labels \
-		    -Werror \
-		    -Wfloat-equal \
-		    -Wformat=2 \
-		    -Wimplicit \
-		    -Winline \
-		    -Wmain \
-		    -Wmissing-braces \
-		    -Wmissing-declarations \
-		    -Wmissing-format-attribute \
-		    -Wmissing-noreturn \
-		    -Wmissing-prototypes \
-		    -Wnested-externs \
-		    -Wnonnull \
-		    -Wpacked \
-		    -Wpadded \
-		    -Wparentheses \
-		    -Wpointer-arith \
-		    -Wredundant-decls \
-		    -Wreturn-type \
-		    -Wsequence-point \
-		    -Wshadow \
-		    -Wsign-compare \
-		    -Wstrict-aliasing \
-		    -Wstrict-prototypes \
-		    -Wswitch \
-		    -Wswitch-enum \
-		    -Wtrigraphs \
-		    -Wundef \
-		    -Wunknown-pragmas \
-		    -Wunused \
-		    -Wwrite-strings \
-		    -pedantic \
-		    -std=c99 \
-
+			-W \
+			-Waggregate-return \
+			-Wall \
+			-Wbad-function-cast \
+			-Wcast-align \
+			-Wcast-qual \
+			-Wchar-subscripts \
+			-Wcomment \
+			-Wdisabled-optimization \
+			-Wendif-labels \
+			-Werror \
+			-Wfloat-equal \
+			-Wformat=2 \
+			-Wimplicit \
+			-Winline \
+			-Wmain \
+			-Wmissing-braces \
+			-Wmissing-declarations \
+			-Wmissing-format-attribute \
+			-Wmissing-noreturn \
+			-Wmissing-prototypes \
+			-Wnested-externs \
+			-Wnonnull \
+			-Wpacked \
+			-Wpadded \
+			-Wparentheses \
+			-Wpointer-arith \
+			-Wredundant-decls \
+			-Wreturn-type \
+			-Wsequence-point \
+			-Wshadow \
+			-Wsign-compare \
+			-Wstrict-aliasing \
+			-Wstrict-prototypes \
+			-Wswitch \
+			-Wswitch-enum \
+			-Wtrigraphs \
+			-Wundef
 ifeq "$(DEBUG)" ""
-NITPICKY_WARNINGS += -Wuninitialized
+NITPICKY_WARNINGS +=	-Wuninitialized
 endif
+NITPICKY_WARNINGS += \
+			-Wunknown-pragmas \
+			-Wunused \
+			-Wwrite-strings \
+			-pedantic \
+			-std=c99 \
+
 CFLAGS += $(NITPICKY_WARNINGS)
 endif
 
@@ -85,11 +87,14 @@ export CC TARGET SRCS OBJS CFLAGS LDLIBS
 
 all: $(TARGET) $(TARGET).1
 
-$(TARGET): $(DEPS) .depend
+$(TARGET): depend
 	@$(MAKE) -f .depend $(TARGET)
 
 $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
+
+tags: $(SRCS) $(HDRS)
+	ctags $(SRCS) $(HDRS)
 
 clean:
 	rm -f *.o $(TARGET) $(TARGET).1
@@ -98,6 +103,7 @@ clean:
 
 distclean: clean
 	rm -f $(DEPS) .depend
+	rm -f tags
 	rm -rf tmp
 	rm -f $(TARGET).tgz
 
@@ -112,8 +118,8 @@ dist:
 install: $(TARGET) $(TARGET).1
 	@-mkdir -p $(DESTDIR)/$(PREFIX)/$(BINDIR)
 	$(INSTALL) $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)
-	@-mkdir -p $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
-	$(INSTALL) -m 644 $(TARGET).1 $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
+	@-mkdir -p $(MANDIR)
+	$(INSTALL) -m 644 $(TARGET).1 $(MANDIR)
 
 test: $(TARGET)
 	./$(TARGET) ~/financial/gcd
