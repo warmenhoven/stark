@@ -40,7 +40,7 @@ $(TARGET): $(OBJS)
 $(OBJS): list.h main.h xml.h
 
 clean:
-	@rm -rf $(TARGET) *.o core $(TARGET).tgz
+	rm -rf $(TARGET) *.o core $(TARGET).tgz
 
 dist:
 	rm -f $(TARGET).tgz
