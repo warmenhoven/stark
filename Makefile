@@ -41,7 +41,7 @@ endif
 
 TARGET = stark
 
-OBJS = display.o gnucash.o list.o main.o tree.o xml.o
+OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
