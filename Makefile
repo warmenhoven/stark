@@ -1,6 +1,6 @@
 CC = gcc
 LDLIBS = -lcurses -lexpat
-CFLAGS += -g -Wall -Werror
+CFLAGS += -O3 -g -Wall -Werror
 
 NITPICKY_WARNINGS = -W \
 		    -Wundef \
