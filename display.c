@@ -1160,6 +1160,9 @@ detail_handle_key(int c)
 				if (expanded)
 					curr_trans->expanded = 1;
 				redraw_screen();
+			} else if (expanded) {
+				expand_transaction();
+				redraw_screen();
 			}
 		}
 		break;
