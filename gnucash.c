@@ -144,11 +144,18 @@ gnucash_add_price(void *pr)
 			c = find_commodity(xml_get_data(sp), xml_get_data(id));
 			if (c) {
 				if (c->quote) {
-					/* eh. silently ignore.
-					fprintf(stderr, "duplicate quote %s\n", c->id);
-					*/
-					free(p);
-					return;
+					void *tm = xml_get_child(pr, "price:time");
+					p->time = gnucash_get_time(tm);
+					if (c->quote->time >= p->time) {
+						/* eh. silently ignore.
+						fprintf(stderr, "duplicate quote %s\n", c->id);
+						*/
+						free(p);
+						return;
+					} else {
+						free(c->quote);
+						c->quote = p;
+					}
 				} else {
 					c->quote = p;
 				}
