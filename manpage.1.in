@@ -4,10 +4,97 @@
 .SH SYNOPSIS
 @PROGNAME@ <data-file>
 .SH USAGE
-@PROGNAME@ displays the financial data contained in the supplied <data-file>. The
-data file must have been created by GnuCash; @PROGNAME@ will tell you if there are
-any problems with the file.
+GnuCash leaves behind dozens of .xac and .log files; in case you haven't
+paid attention to the GnuCash documentation, those are just backup files
+(the .log files aren't even that) and you can ignore them or do whatever you
+want to with them. I remove mine after committing the changes to CVS.
 
-Keys are similar to both vi (j, k) and emacs (C-N, C-P). Hitting Enter on an
-account displays that account's register; hitting enter on a register entry
-displays all the splits for that transaction.
+If it complains about anything and doesn't show you an account list, odds
+are there's a problem with your GnuCash data. Either that or you've got
+something I don't use like AP or AR. Hopefully there's enough information in
+the error message for you to open your data file in an editor and track down
+where the problem is.
+
+.SH KEYS
+.SS Account List Display
+
+.TP
+q
+exit
+
+.TP
+enter
+show this account's register
+
+.TP
+h or left
+move to the parent account
+.TP
+j or down or ^N
+move to the account shown below
+.TP
+k or up or ^P
+move to the account shown above
+.TP
+home or ^A
+move to the first account
+.TP
+end or ^E
+move to the last account
+
+.TP
+-
+hide the current account's subaccounts
+.TP
++ or right
+show the current account's subaccounts
+.TP
+space
+toggle whether the current account's subaccounts are shown
+.TP
+*
+show all subaccounts
+.TP
+/
+hide all subaccounts
+
+.TP
+^R
+reload from file
+
+.SS Register Display
+
+.TP
+q
+go back to the account display
+
+.TP
+enter or space
+toggle whether the current transaction's splits are listed explicitly
+
+.TP
+J
+jump to the account referenced by the current split (for transactions with only two splits, jump to the other account)
+
+.TP
+j or down
+move to the split or transaction shown below
+.TP
+^N
+move to the transaction below, skipping all shown splits
+.TP
+k or up
+move to the split or transaction shown above
+.TP
+^P
+move to the transaction above, skipping all shown splits
+.TP
+home or ^A
+move to the first transaction
+.TP
+end or ^E
+move to the last transaction
+
+.TP
+^R
+reload from file
