@@ -70,7 +70,7 @@ xml_str(char *str)
 		ret = NULL;
 	}
 
-	len = strlen(str) * 5 + 1;
+	len = strlen(str) * 6 + 1;
 
 	ret = malloc(len);
 	if (!ret)
@@ -95,6 +95,13 @@ xml_str(char *str)
 			*b++ = 'a';
 			*b++ = 'm';
 			*b++ = 'p';
+			*b++ = ';';
+		} else if (*a == '"') {
+			*b++ = '&';
+			*b++ = 'q';
+			*b++ = 'u';
+			*b++ = 'o';
+			*b++ = 't';
 			*b++ = ';';
 		} else {
 			*b++ = *a;
