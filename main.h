@@ -116,7 +116,8 @@ extern void free_all(void);
 
 extern void display_run(char *);
 
-extern void build_trans_list(list *, list **);
+extern int trans_cmp_func(const void *, const void *);
+extern void build_trans_list(list *, list **, int);
 extern void write_file(const char *);
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */

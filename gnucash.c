@@ -413,18 +413,6 @@ gnucash_add_account(void *acc)
 	}
 }
 
-static int
-gnucash_trans_cmp(const void *one, const void *two)
-{
-	const transaction *a = one, *b = two;
-
-	if (a->posted != b->posted)
-		return a->posted - b->posted;
-	if (a->num != b->num)
-		return a->num - b->num;
-	return a->entered - b->entered;
-}
-
 static void
 gnucash_add_split(transaction *t, void *sp, value *sum)
 {
@@ -483,7 +471,7 @@ gnucash_add_split(transaction *t, void *sp, value *sum)
 			bail("Split for non-account (%s)?\n", xml_get_data(data));
 		if (!list_find(a->transactions, t)) {
 			a->transactions =
-				list_insert_sorted(a->transactions, t, gnucash_trans_cmp);
+				list_insert_sorted(a->transactions, t, trans_cmp_func);
 			value_add(&a->quantity, &s->quantity);
 		}
 		s->account = strdup(xml_get_data(data));
@@ -736,7 +724,7 @@ free_all(void)
 		free(c);
 	}
 
-	build_trans_list(accounts, &l);
+	build_trans_list(accounts, &l, 0);
 
 	while (l) {
 		transaction *t = l->data;

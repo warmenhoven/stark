@@ -13,6 +13,21 @@ list_new(void *data)
 	return l;
 }
 
+list *
+list_copy(list *l)
+{
+	list *r = NULL;
+	if (!l)
+		return r;
+	while (l->next)
+		l = l->next;
+	while (l) {
+		r = list_prepend(r, l->data);
+		l = l->prev;
+	}
+	return r;
+}
+
 unsigned int
 list_length(list *l)
 {

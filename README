@@ -27,6 +27,8 @@
    q		- exit
 
    enter	- show this account's register
+   S		- show transactions for this account and all subaccounts
+   G		- show all transactions (General Ledger)
 
    h, left	- move to the parent account
    j, down, ^N	- move to the account shown below
@@ -42,15 +44,9 @@
 
    ^R		- reload from file
 
-   In the register display, these keys do these things:
+   In the register/ledger display, these keys do these things:
 
    q		- go back to the account display
-
-   enter, space	- toggle whether the current transaction's splits are listed
-		  explicitly
-
-   J		- jump to the account referenced by the current split (for
-		  transactions with only two splits, jump to the other account)
 
    j, down	- move to the split or transaction shown below
    ^N		- move to the transaction below, skipping all shown splits
@@ -60,6 +56,14 @@
    end, ^E	- move to the last transaction
 
    ^R		- reload from file
+
+   If you are not looking at the subaccounts or general ledger, you can also
+   use these keys to interact with splits:
+
+   enter, space	- toggle whether the current transaction's splits are listed
+		  explicitly
+   J		- jump to the account referenced by the current split (for
+		  transactions with only two splits, jump to the other account)
 
 4. That's it?
 

@@ -11,6 +11,7 @@ typedef struct _list {
 typedef int (*list_cmpfunc)(const void *, const void *);
 
 extern list *list_new(void *);
+extern list *list_copy(list *);
 extern unsigned int list_length(list *);
 extern list *list_nth(list *, int);
 extern list *list_find(list *, void *);

@@ -12,17 +12,21 @@
 
 static enum {
 	ACCT_LIST,
-	REGISTER
+	REGISTER,
+	JOURNAL
 } display_mode;
 
 static int skip_acct = 0;
 static list *disp_acct = NULL;
 static account *curr_acct = NULL;
 
+static list *trans_list = NULL;
 static int skip_trans = 0;
 static list *disp_trans = NULL;
 static transaction *curr_trans = NULL;
-#define REG_HDR 3
+#define REG_HDR 4
+
+static account *journal_parent = NULL;
 
 static int
 build_expd_accts(list *accts, list **l)
@@ -235,13 +239,35 @@ draw_accounts(void)
 	list_free(expd);
 }
 
+static char *
+full_acct_name(account *a)
+{
+	account *b = a;
+	int sz = 0, cur = 0;;
+	char *x;
+	while (b) {
+		sz += strlen(b->name) + 1;
+		b = b->parent;
+	}
+	cur = sz;
+	x = malloc(sz);
+	x[sz - 1] = 0;
+	while (a) {
+		cur -= strlen(a->name) + 1;
+		memcpy(x + cur, a->name, strlen(a->name));
+		if (a->parent)
+			x[cur - 1] = ':';
+		a = a->parent;
+	}
+
+	return x;
+}
+
 static void
 draw_trans_header(void)
 {
 	int i, j = 0;
-
-	list *l = curr_acct->transactions;
-	while (l && l->next) l = l->next;
+	char *x;
 
 	move(0, 0);
 	addstr("   DATE   ");
@@ -258,7 +284,8 @@ draw_trans_header(void)
 	addch(ACS_VLINE);
 	addstr("    DEC     ");
 	addch(ACS_VLINE);
-	addstr(" BALANCE");
+	if (display_mode != JOURNAL)
+		addstr(" BALANCE");
 	clrtoeol();
 
 	move(1, 0);
@@ -293,6 +320,11 @@ draw_trans_header(void)
 	for (; j < COLS; j++)
 		addch(ACS_HLINE);
 
+	x = full_acct_name(curr_acct);
+	mvaddstr(2, 0, x);
+	free(x);
+
+	move(3, 0);
 	for (i = 0; i < COLS; i++)
 		addch(ACS_HLINE);
 }
@@ -344,59 +376,64 @@ draw_trans(transaction *t, int line, double total)
 	mvaddstr(line, 19, t->description);
 	mvaddstr(line, 41, "   ");
 
-	if (list_length(t->splits) > 2) {
-		list *l;
-		mvaddstr(line, 44, "- Split Transaction -");
-		l = t->splits;
-		while (l) {
-			split *s = l->data;
-			l = l->next;
-			if (!strcmp(s->account, curr_acct->id)) {
-				mvaddch(line, 69, s->recstate);
-				break;
+	if (display_mode != JOURNAL) {
+		if (list_length(t->splits) > 2) {
+			list *l;
+			mvaddstr(line, 44, "- Split Transaction -");
+			l = t->splits;
+			while (l) {
+				split *s = l->data;
+				l = l->next;
+				if (!strcmp(s->account, curr_acct->id)) {
+					mvaddch(line, 69, s->recstate);
+					break;
+				}
 			}
+		} else {
+			account *a;
+			split *s = t->splits->data;
+			split *o = t->splits->data;
+
+			assert(t->splits->next);
+
+			if (!strcmp(s->account, curr_acct->id))
+				s = t->splits->next->data;
+			else
+				o = t->splits->next->data;
+
+			a = find_account(s->account);
+			if (!a)
+				mvaddstr(line, 44, "                     ");
+			else
+				mvaddstr(line, 44, a->name);
+
+			mvaddstr(line, 66, "   ");
+			mvaddch(line, 69, o->recstate);
+			mvaddstr(line, 70, "   ");
 		}
-	} else {
-		account *a;
-		split *s = t->splits->data;
-		split *o = t->splits->data;
 
-		assert(t->splits->next);
-
-		if (!strcmp(s->account, curr_acct->id))
-			s = t->splits->next->data;
+		balance = trans_balance(t, curr_acct);
+		if (balance > 0)
+			sprintf(tmpstr, "$%.02f", balance);
 		else
-			o = t->splits->next->data;
+			sprintf(tmpstr, "$%.02f", 0 - balance);
+		if (balance > 0) {
+			mvaddstr(line, 73, tmpstr);
+			for (i = 84; i < 96; i++)
+				mvaddch(line, i, ' ');
+		} else {
+			for (i = 73; i < 86; i++)
+				mvaddch(line, i, ' ');
+			mvaddstr(line, 86, tmpstr);
+		}
+		mvaddstr(line, 96, "   ");
 
-		a = find_account(s->account);
-		if (!a)
-			mvaddstr(line, 44, "                     ");
-		else
-			mvaddstr(line, 44, a->name);
-
-		mvaddstr(line, 66, "   ");
-		mvaddch(line, 69, o->recstate);
-		mvaddstr(line, 70, "   ");
-	}
-
-	balance = trans_balance(t, curr_acct);
-	if (balance > 0)
-		sprintf(tmpstr, "$%.02f", balance);
-	else
-		sprintf(tmpstr, "$%.02f", 0 - balance);
-	if (balance > 0) {
-		mvaddstr(line, 73, tmpstr);
-		for (i = 84; i < 96; i++)
-			mvaddch(line, i, ' ');
+		sprintf(tmpstr, "%.02f", balance + total);
+		mvaddstr(line, 99, tmpstr);
 	} else {
-		for (i = 73; i < 86; i++)
+		for (i = 44; i < COLS; i++)
 			mvaddch(line, i, ' ');
-		mvaddstr(line, 86, tmpstr);
 	}
-	mvaddstr(line, 96, "   ");
-
-	sprintf(tmpstr, "%.02f", balance + total);
-	mvaddstr(line, 99, tmpstr);
 
 	if (t->selected)
 		attroff(A_REVERSE);
@@ -455,7 +492,7 @@ draw_split(split *s, int line)
 static void
 draw_transactions(void)
 {
-	list *l = curr_acct->transactions;
+	list *l = trans_list, *x = NULL;
 	int i = skip_trans;
 	double balance = 0;
 	int line = REG_HDR;
@@ -467,13 +504,25 @@ draw_transactions(void)
 	while (i--) {
 		transaction *t = l->data;
 		balance += trans_balance(t, curr_acct);
+		if (display_mode == JOURNAL) {
+			x = t->splits;
+			while (i && x) {
+				x = x->next;
+				i--;
+			}
+		}
 		l = l->next;
+	}
+
+	while (x && line < LINES) {
+		draw_split(x->data, line++);
+		x = x->next;
 	}
 
 	while (l && line < LINES) {
 		transaction *t = l->data;
 		draw_trans(t, line++, balance);
-		if (t->expanded) {
+		if (display_mode == JOURNAL || t->expanded) {
 			list *s = t->splits;
 			while (s) {
 				draw_split(s->data, line++);
@@ -496,6 +545,7 @@ redraw_screen(void)
 		draw_accounts();
 		break;
 	case REGISTER:
+	case JOURNAL:
 		draw_trans_header();
 		draw_transactions();
 		break;
@@ -673,14 +723,24 @@ recalc_skip_trans(void)
 	if (display_mode == ACCT_LIST)
 		return;
 
-	len = list_length(curr_acct->transactions);
+	len = list_length(trans_list);
 
-	l = list_find(curr_acct->transactions, curr_trans);
+	l = list_find(trans_list, curr_trans);
 	assert(l);
 	i = list_length(l->next);
 
-	if (curr_trans->expanded)
+	if (display_mode == JOURNAL) {
+		l = trans_list;
+		while (l) {
+			transaction *t = l->data;
+			l = l->next;
+			len += list_length(t->splits);
+			if (t == curr_trans)
+				break;
+		}
+	} else if (curr_trans->expanded) {
 		len += list_length(curr_trans->splits);
+	}
 
 	if ((len - skip_trans) - i < (LINES - REG_HDR))
 		return;
@@ -691,8 +751,20 @@ recalc_skip_trans(void)
 static void
 init_trans(void)
 {
-	list *l = curr_acct->transactions;
+	list *l;
 	int i = 0;
+
+	if (display_mode == JOURNAL) {
+		if (journal_parent) {
+			trans_list = list_copy(journal_parent->transactions);
+			build_trans_list(journal_parent->subs, &trans_list, 1);
+		} else {
+			build_trans_list(accounts, &trans_list, 1);
+		}
+	} else {
+		trans_list = curr_acct->transactions;
+	}
+	l = trans_list;
 
 	if (curr_trans) {
 		curr_trans->selected = 0;
@@ -710,6 +782,8 @@ init_trans(void)
 			curr_trans = t;
 		}
 		i++;
+		if (display_mode == JOURNAL)
+			i += list_length(t->splits);
 	}
 
 	if (i >= LINES - REG_HDR)
@@ -733,6 +807,15 @@ list_handle_key(int c)
 		if (curr_acct->placeholder)
 			break;
 		display_mode = REGISTER;
+		clear();
+		init_trans();
+		redraw_screen();
+		break;
+
+	case 'G':
+	case 'S':
+		journal_parent = (c == 'S') ? curr_acct : NULL;
+		display_mode = JOURNAL;
 		clear();
 		init_trans();
 		redraw_screen();
@@ -942,7 +1025,7 @@ unexpand_transaction(void)
 	curr_trans->expanded = 0;
 
 	s = curr_trans->splits;
-	l = list_find(curr_acct->transactions, curr_trans);
+	l = list_find(trans_list, curr_trans);
 	assert(l);
 	l = l->next;
 	while (s && l) {
@@ -967,10 +1050,12 @@ jump_split(split *s)
 	curr_acct = a;
 	curr_acct->selected = 1;
 
-	l = list_find(curr_acct->transactions, curr_trans);
+	trans_list = curr_acct->transactions;
+
+	l = list_find(trans_list, curr_trans);
 	assert(l);
 	nlen = list_length(l->next);
-	len = list_length(curr_acct->transactions) - nlen;
+	len = list_length(trans_list) - nlen;
 	if (curr_trans->expanded)
 		slen = list_length(curr_trans->splits);
 
@@ -1000,6 +1085,9 @@ register_handle_key(int c)
 
 	switch (c) {
 	case 'q':
+		if (display_mode == JOURNAL)
+			list_free(trans_list);
+		trans_list = NULL;
 		display_mode = ACCT_LIST;
 		if (curr_trans && curr_trans->expanded) {
 			curr_trans->expanded = 0;
@@ -1022,6 +1110,8 @@ register_handle_key(int c)
 	case 10:	/* ^J */
 	case 13:	/* ^M */
 	case ' ':
+		if (display_mode == JOURNAL)
+			break;
 		if (!curr_trans->selected)
 			break;
 		if (curr_trans->expanded) {
@@ -1033,6 +1123,8 @@ register_handle_key(int c)
 		break;
 
 	case 'J':
+		if (display_mode == JOURNAL)
+			break;
 		l = curr_trans->splits;
 		while (l) {
 			split *s = l->data;
@@ -1075,7 +1167,7 @@ register_handle_key(int c)
 					redraw_screen();
 					break;
 				}
-				l = list_find(curr_acct->transactions, curr_trans);
+				l = list_find(trans_list, curr_trans);
 				assert(l);
 				if (!l->next) {
 					assert(s);
@@ -1100,7 +1192,7 @@ register_handle_key(int c)
 				expand_transaction();
 			redraw_screen();
 		} else {
-			l = list_find(curr_acct->transactions, curr_trans);
+			l = list_find(trans_list, curr_trans);
 			assert(l);
 			if (l->next) {
 				unexpand_transaction();
@@ -1138,7 +1230,7 @@ register_handle_key(int c)
 			redraw_screen();
 			break;
 		} else if (curr_trans->expanded) {
-			l = list_find(curr_acct->transactions, curr_trans);
+			l = list_find(trans_list, curr_trans);
 			assert(l);
 			if (!l->prev)
 				break;
@@ -1158,7 +1250,7 @@ register_handle_key(int c)
 				expand_transaction();
 			redraw_screen();
 		} else {
-			l = list_find(curr_acct->transactions, curr_trans);
+			l = list_find(trans_list, curr_trans);
 			assert(l);
 			if (l->prev) {
 				skip_trans--;
@@ -1186,13 +1278,13 @@ register_handle_key(int c)
 				}
 				splits = splits->next;
 			}
-			if (curr_trans != curr_acct->transactions->data) {
+			if (curr_trans != trans_list->data) {
 				unexpand_transaction();
 			}
 			expanded = 1;
 		}
 		curr_trans->selected = 0;
-		curr_trans = curr_acct->transactions->data;
+		curr_trans = trans_list->data;
 		curr_trans->selected = 1;
 		skip_trans = 0;
 		if (expanded)
@@ -1202,7 +1294,7 @@ register_handle_key(int c)
 	case KEY_END:
 	case 5:		/* ^E */
 		if (curr_trans->expanded) {
-			l = list_find(curr_acct->transactions, curr_trans);
+			l = list_find(trans_list, curr_trans);
 			assert(l);
 			if (!l->next) {
 				/* we're the last transaction */
@@ -1319,7 +1411,7 @@ display_run(char *filename)
 				}
 				recalc_skip_acct();
 				if (transid) {
-					list *l = curr_acct->transactions;
+					list *l = trans_list;
 					while (l) {
 						transaction *t = l->data;
 						if (strcasecmp(t->id, transid)) {
@@ -1360,6 +1452,7 @@ display_run(char *filename)
 			}
 			break;
 		case REGISTER:
+		case JOURNAL:
 			if (register_handle_key(c)) {
 				clear();
 				refresh();

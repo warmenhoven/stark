@@ -38,18 +38,34 @@ num_accounts(list *l)
 	return ret;
 }
 
+int
+trans_cmp_func(const void *one, const void *two)
+{
+	const transaction *a = one, *b = two;
+
+	if (a->posted != b->posted)
+		return a->posted - b->posted;
+	if (a->num != b->num)
+		return a->num - b->num;
+	return a->entered - b->entered;
+}
+
 void
-build_trans_list(list *l, list **t)
+build_trans_list(list *l, list **t, int sorted)
 {
 	while (l) {
 		account *a = l->data;
 		list *s = a->transactions;
 		while (s) {
-			if (!list_find(*t, s->data))
-				*t = list_append(*t, s->data);
+			if (!list_find(*t, s->data)) {
+				if (sorted)
+					*t = list_insert_sorted(*t, s->data, trans_cmp_func);
+				else
+					*t = list_append(*t, s->data);
+			}
 			s = s->next;
 		}
-		build_trans_list(a->subs, t);
+		build_trans_list(a->subs, t, sorted);
 		l = l->next;
 	}
 }
@@ -451,7 +467,7 @@ write_file(const char *filename)
 	if (!f)
 		return;
 
-	build_trans_list(accounts, &l);
+	build_trans_list(accounts, &l, 0);
 
 	write_header(f);
 	write_counts(f, list_length(l));
