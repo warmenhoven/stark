@@ -67,4 +67,14 @@ tree_insert(tree *l, void *data, tree_cmpfunc func)
 	return l;
 }
 
+void
+tree_free(tree *t)
+{
+	if (!t)
+		return NULL;
+	tree_free(t->prev);
+	tree_free(t->next);
+	free(t);
+}
+
 /* vim:set ts=4 sw=4 noet ai tw=80: */
