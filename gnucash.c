@@ -514,38 +514,41 @@ gnucash_process(void *top)
 static void
 gnucash_start(void *data, const char *el, const char **attr)
 {
+	void **curr = (void **)data;
 	int i;
 
-	if (*(void **)data)
-		*(void **)data = xml_child(*(void **)data, el);
+	if (*curr)
+		*curr = xml_child(*curr, el);
 	else
-		*(void **)data = xml_new(el);
+		*curr = xml_new(el);
 
 	for (i = 0; attr[i]; i +=2 )
-		xml_attrib(*(void **)data, attr[i], attr[i + 1]);
+		xml_attrib(*curr, attr[i], attr[i + 1]);
 }
 
 static void
 gnucash_end(void *data, const char *el)
 {
+	void **curr = (void **)data;
 	void *parent;
 
-	if (!*(void **)data)
+	if (!*curr)
 		return;
 
-	if (!(parent = xml_parent(*(void **)data))) {
-		gnucash_process(*(void **)data);
-		xml_free(*(void **)data);
-		*(void **)data = NULL;
-	} else if (!strcmp(xml_name(*(void **)data), el)) {
-		*(void **)data = parent;
+	if (!(parent = xml_parent(*curr))) {
+		gnucash_process(*curr);
+		xml_free(*curr);
+		*curr = NULL;
+	} else if (!strcmp(xml_name(*curr), el)) {
+		*curr = parent;
 	}
 }
 
 static void
 gnucash_chardata(void *data, const char *s, int len)
 {
-	xml_data(*(void **)data, s, len);
+	void **curr = (void **)data;
+	xml_data(*curr, s, len);
 }
 
 void
