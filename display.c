@@ -650,6 +650,7 @@ list_handle_key(int c)
 	case 'q':
 		return 1;
 
+	case 10:	/* ^J */
 	case 13:	/* ^M */
 		if (curr_acct->placeholder)
 			break;
@@ -935,6 +936,7 @@ detail_handle_key(int c)
 		redraw_screen();
 		break;
 
+	case 10:	/* ^J */
 	case 13:	/* ^M */
 	case ' ':
 		if (!curr_trans->selected)
@@ -1042,6 +1044,11 @@ detail_handle_key(int c)
 			}
 			redraw_screen();
 			break;
+		} else if (curr_trans->expanded) {
+			l = list_find(curr_acct->transactions, curr_trans);
+			assert(l);
+			if (!l->prev)
+				break;
 		}
 		/* fallthrough */
 	case 16:	/* ^P */
