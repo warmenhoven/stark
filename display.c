@@ -603,10 +603,10 @@ recalc_skip_trans(void)
 	if (curr_trans->expanded)
 		len += list_length(curr_trans->splits);
 
-	if ((len - skip_trans) - i < LINES)
+	if ((len - skip_trans) - i < (LINES - 3))
 		return;
 
-	skip_trans = len - LINES - i;
+	skip_trans = len - (LINES - 3) - i;
 }
 
 static void
