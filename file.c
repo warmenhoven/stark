@@ -38,7 +38,7 @@ num_accounts(list *l)
 	return ret;
 }
 
-static void
+void
 build_trans_list(list *l, list **t)
 {
 	while (l) {

@@ -30,6 +30,8 @@ main(int argc, char **argv)
 
 	display_run(argv[1]);
 
+	free_all();
+
 	return 0;
 }
 

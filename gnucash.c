@@ -421,7 +421,7 @@ gnucash_trans_cmp(const void *one, const void *two)
 }
 
 static void
-gnucash_add_split(transaction *t, void *sp)
+gnucash_add_split(transaction *t, void *sp, value *sum)
 {
 	void *data;
 	split *s;
@@ -462,12 +462,13 @@ gnucash_add_split(transaction *t, void *sp)
 
 	data = xml_get_child(sp, "split:value");
 	if (!data || !xml_get_data(data))
-		bail("Split without reconciled value?\n");
+		bail("Split without value?\n");
 	gnucash_get_value(xml_get_data(data), &s->value);
+	value_add(sum, &s->value);
 
 	data = xml_get_child(sp, "split:quantity");
 	if (!data || !xml_get_data(data))
-		bail("Split without reconciled quantity?\n");
+		bail("Split without quantity?\n");
 	gnucash_get_value(xml_get_data(data), &s->quantity);
 
 	data = xml_get_child(sp, "split:account");
@@ -532,14 +533,25 @@ gnucash_add_transaction(void *trans)
 	data = xml_get_child(trans, "trn:splits");
 	if (data) {
 		list *splits = xml_get_children(data);
+		value sum;
+
 		if (!splits)
-			bail("Transaction without splits?\n");
+			bail("Transaction %s without splits?\n", t->id);
+		if (list_length(splits) < 2)
+			bail("Transaction %s with only one split?\n", t->id);
+
+		sum.val = 0;
+		sum.sig = 0;
+
 		while (splits) {
 			if (strcmp(xml_name(splits->data), "trn:split"))
 				bail("non-split (%s) in splits?\n", xml_name(splits->data));
-			gnucash_add_split(t, splits->data);
+			gnucash_add_split(t, splits->data, &sum);
 			splits = splits->next;
 		}
+
+		if (sum.val != 0)
+			bail("transaction %s not zero-sum!\n", t->id);
 	} else {
 		bail("Transaction without splits?\n");
 	}
@@ -664,6 +676,75 @@ gnucash_chardata(void *data, const char *s, int len)
 {
 	void **curr = (void **)data;
 	xml_data(*curr, s, len);
+}
+
+static void
+free_accounts(list *l)
+{
+	while (l) {
+		account *a = l->data;
+		l = list_remove(l, a);
+		free(a->name);
+		free(a->id);
+		if (a->description)
+			free(a->description);
+		free_accounts(a->subs);
+		if (a->oldsrc)
+			free(a->oldsrc);
+		if (a->notes)
+			free(a->notes);
+		list_free(a->transactions);
+		free(a);
+	}
+}
+
+void
+free_all(void)
+{
+	list *l = NULL;
+
+	while (commodities) {
+		commodity *c = commodities->data;
+		commodities = list_remove(commodities, c);
+		free(c->space);
+		free(c->id);
+		free(c->name);
+		if (c->quote) {
+			free(c->quote->id);
+			free(c->quote);
+		}
+		free(c);
+	}
+
+	build_trans_list(accounts, &l);
+
+	while (l) {
+		transaction *t = l->data;
+		l = list_remove(l, t);
+		free(t->id);
+		if (t->description)
+			free(t->description);
+		while (t->splits) {
+			split *s = t->splits->data;
+			t->splits = list_remove(t->splits, s);
+			free(s->id);
+			if (s->memo)
+				free(s->memo);
+			if (s->action)
+				free(s->action);
+			free(s->account);
+			free(s);
+		}
+		free(t);
+	}
+
+	free_accounts(accounts);
+	accounts = NULL;
+
+	tree_free(acct_tree);
+	acct_tree = NULL;
+
+	free(book_guid);
 }
 
 void

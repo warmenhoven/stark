@@ -41,6 +41,8 @@
    *		- show all subaccounts
    /		- hide all subaccounts
 
+   ^R		- reload from file
+
    In the register display, these keys do these things:
 
    q		- go back to the account display
@@ -58,6 +60,8 @@
    home, ^A	- move to the first transaction
    end, ^E	- move to the last transaction
 
+   ^R		- reload from file
+
 4. That's it?
 
    stark doesn't do any real reporting, and doesn't let you modify the data.
@@ -65,7 +69,6 @@
    access and need to see how much money you have. Here's a quick TODO list:
 
 	* reporting
-	* reload from file
 	* fetch updated stock quotes
 	* editable
 

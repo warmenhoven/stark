@@ -109,9 +109,11 @@ extern void value_add(value *, value *);
 extern void value_multiply(value *, value *, value *);
 
 extern void gnucash_init(char *);
+extern void free_all(void);
 
 extern void display_run(char *);
 
+extern void build_trans_list(list *, list **);
 extern void write_file(const char *);
 
 /* vim:set ts=4 sw=4 noet ai tw=80: */

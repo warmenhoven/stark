@@ -1,3 +1,9 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
 #include <assert.h>
 #include <curses.h>
 #include <stdlib.h>
@@ -1238,6 +1244,7 @@ display_run(char *filename)
 		if (c == KEY_RESIZE) {
 			endwin();
 			initscr();
+			curs_set(0);
 			recalc_skip_acct();
 			recalc_skip_trans();
 			clear();
@@ -1247,6 +1254,64 @@ display_run(char *filename)
 			clear();
 			redraw_screen();
 			continue;
+		} else if (c == 18) {	/* ^R */
+			char *acctid, *transid = NULL;
+
+			acctid = strdup(curr_acct->id);
+			if (display_mode == ACCT_DETAIL)
+				transid = strdup(curr_trans->id);
+			curr_trans = NULL;
+
+			clear();
+			refresh();
+			endwin();
+
+			free_all();
+
+			gnucash_init(filename);
+
+			if (!accounts) {
+				fprintf(stderr, "no accounts!\n");
+				return;
+			}
+
+			curr_acct = find_account(acctid);
+			free(acctid);
+			if (!curr_acct) {
+				curr_acct = accounts->data;
+				display_mode = ACCT_DETAIL;
+				if (transid)
+					free(transid);
+			} else {
+				account *p = curr_acct->parent;
+				curr_acct->selected = 1;
+				while (p) {
+					p->expanded = 1;
+					p = p->parent;
+				}
+				recalc_skip_acct();
+				if (transid) {
+					list *l = curr_acct->transactions;
+					while (l) {
+						transaction *t = l->data;
+						if (strcasecmp(t->id, transid)) {
+							l = l->next;
+							continue;
+						}
+						curr_trans = t;
+						break;
+					}
+					free(transid);
+				}
+				if (curr_trans) {
+					curr_trans->selected = 1;
+					recalc_skip_trans();
+				}
+			}
+
+			initscr();
+			curs_set(0);
+			redraw_screen();
 		} else if (c == 19) {	/* ^S */
 			write_file(filename);
 			continue;
@@ -1259,6 +1324,8 @@ display_run(char *filename)
 				clear();
 				refresh();
 				endwin();
+				list_free(disp_acct);
+				list_free(disp_trans);
 				return;
 			}
 			break;
@@ -1267,6 +1334,8 @@ display_run(char *filename)
 				clear();
 				refresh();
 				endwin();
+				list_free(disp_acct);
+				list_free(disp_trans);
 				return;
 			}
 			break;

@@ -15,6 +15,8 @@ typedef int (*tree_cmpfunc)(const void *, const void *);
 extern tree *tree_new(void *);
 extern tree *tree_insert(tree *, void *, tree_cmpfunc);
 extern tree *tree_find(tree *, void *, tree_cmpfunc);
+extern tree *tree_remove(tree *, void *, tree_cmpfunc);
+extern tree *tree_root(tree *);
 extern void tree_free(tree *);
 
 #endif
