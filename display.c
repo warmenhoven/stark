@@ -27,6 +27,7 @@ static transaction *curr_trans = NULL;
 #define REG_HDR 4
 
 static account *journal_parent = NULL;
+static unsigned int journal_pre = 0, journal_post = 0;
 
 static int
 build_expd_accts(list *accts, list **l)
@@ -518,9 +519,11 @@ draw_transactions(void)
 		l = l->next;
 	}
 
+	journal_pre = 0;
 	while (x && line < LINES) {
 		draw_split(x->data, line++);
 		x = x->next;
+		journal_pre++;
 	}
 
 	while (l && line < LINES) {
@@ -528,9 +531,11 @@ draw_transactions(void)
 		draw_trans(t, line++, balance);
 		if (display_mode == JOURNAL || t->expanded) {
 			list *s = t->splits;
-			while (s) {
+			journal_post = 0;
+			while (s && line < LINES) {
 				draw_split(s->data, line++);
 				s = s->next;
+				journal_post++;
 			}
 		}
 		disp_trans = list_append(disp_trans, t);
@@ -1201,6 +1206,13 @@ register_handle_key(int c)
 			curr_trans->selected = 1;
 			if (expanded)
 				expand_transaction();
+			if (display_mode == JOURNAL && !l->next->next &&
+				journal_post != list_length(curr_trans->splits)) {
+				skip_trans += list_length(curr_trans->splits);
+				skip_trans -= journal_post;
+				redraw_screen();
+				break;
+			}
 			redraw_screen();
 		} else {
 			l = list_find(trans_list, curr_trans);
@@ -1214,6 +1226,8 @@ register_handle_key(int c)
 					expand_transaction();
 				} else {
 					skip_trans++;
+					if (display_mode == JOURNAL)
+						skip_trans += list_length(curr_trans->splits);
 				}
 				redraw_screen();
 			}
@@ -1268,6 +1282,10 @@ register_handle_key(int c)
 				curr_trans->selected = 0;
 				curr_trans = l->prev->data;
 				curr_trans->selected = 1;
+				if (display_mode == JOURNAL) {
+					skip_trans -= list_length(curr_trans->splits);
+					skip_trans += journal_pre;
+				}
 				if (expanded)
 					curr_trans->expanded = 1;
 				redraw_screen();
