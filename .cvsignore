@@ -1,5 +1,4 @@
 .cvsignore
-.depend
 *.bb
 *.bbg
 *.da
