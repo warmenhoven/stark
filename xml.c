@@ -10,6 +10,7 @@
 typedef struct _xmlnode {
 	struct _xmlnode *parent;
 	list *children;
+	list *children_tail;
 	list *attribs;
 	char *name;
 	char *data;
@@ -39,7 +40,11 @@ xml_child(void *p, const char *el)
 	node->name = strdup(el);
 	node->parent = parent;
 
-	parent->children = list_append(parent->children, node);
+	parent->children_tail = list_append(parent->children_tail, node);
+	if (!parent->children)
+		parent->children = parent->children_tail;
+	if (parent->children_tail->next)
+		parent->children_tail = parent->children_tail->next;
 
 	return node;
 }
@@ -58,7 +63,7 @@ xml_attrib(void *n, const char *attr, const char *val)
 	attrib->name = strdup(attr);
 	attrib->data = strdup(val);
 
-	node->attribs = list_append(node->attribs, attrib);
+	node->attribs = list_prepend(node->attribs, attrib);
 }
 
 void
