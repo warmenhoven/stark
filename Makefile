@@ -1,6 +1,11 @@
 #CC = gcc
 LDLIBS = -lcurses -lexpat
 
+INSTALL = install -c
+PREFIX = usr
+BINDIR = bin
+DATADIR = share
+
 ifneq "$(PICKY)" ""
 NITPICKY_WARNINGS = -Werror \
 		    -Wall \
@@ -40,7 +45,7 @@ endif
 
 TARGET = stark
 
-all: $(TARGET)
+all: $(TARGET) $(TARGET).1
 
 OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
 
@@ -51,20 +56,23 @@ $(TARGET).1: manpage.1.in
 	sed -e 's,@PROGNAME@,$(TARGET),g' < $< > $@
 
 clean:
-	rm -rf $(TARGET) *.bb *.bbg *.da *.gcov *.o core gmon.out $(TARGET).tgz
+	rm -rf $(TARGET) $(TARGET).1 $(TARGET).tgz *.bb *.bbg *.da *.gcov *.o core gmon.out
 
-dist: $(TARGET).1
+dist:
 	rm -f $(TARGET).tgz
 	mkdir -p tmp/$(TARGET)-`date +%Y%m%d`
-	cp Makefile README $(TARGET).1 *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
+	cp Makefile README manpage.1.in *.[ch] tmp/$(TARGET)-`date +%Y%m%d`
 	cd tmp && tar zcf ../$(TARGET).tgz $(TARGET)-`date +%Y%m%d`
 	rm -rf tmp
 
-test: $(TARGET)
-	./stark gcd
+install: $(TARGET) $(TARGET).1
+	-mkdir -p $(DESTDIR)/$(PREFIX)/$(BINDIR)
+	-$(INSTALL) $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)
+	-mkdir -p $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
+	-$(INSTALL) -m 644 $(TARGET).1 $(DESTDIR)/$(PREFIX)/$(DATADIR)/man/man1
 
-timetest: $(TARGET)
-	STARK_TIME=1 time ./stark gcd
+test: $(TARGET)
+	./$(TARGET) gcd
 
 display.o: display.c main.h list.h
 file.o: file.c main.h list.h
