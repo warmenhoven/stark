@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include "tree.h"
 
@@ -82,6 +83,8 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 			s = s->right;
 		}
 	}
+
+	assert(s);
 
 	/* case 2: new node's parent is black */
 	if (!s->parent->red) {
