@@ -842,9 +842,9 @@ expand_transaction(void)
 
 	len = list_length(curr_trans->splits);
 
-	if (len + prelen >= LINES + 3) {
+	if (len + prelen >= LINES - 3) {
 		/* more splits than space below */
-		skip_trans += (len + prelen - LINES - 3);
+		skip_trans += (len + prelen - (LINES - 3));
 	}
 
 	curr_trans->expanded = 1;
