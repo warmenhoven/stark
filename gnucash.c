@@ -586,6 +586,8 @@ gnucash_parse_book(void *book)
 
 		if (!strcmp(xml_name(child), "book:id")) {
 			book_guid = strdup(xml_get_data(child));
+		} else if (!strcmp(xml_name(child), "book:slots")) {
+			/* XXX */
 		} else if (!strcmp(xml_name(child), "gnc:count-data")) {
 			/* we don't really need to do anything here either. i guess we could
 			 * use this for validation purposes, but eh. */
