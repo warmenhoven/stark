@@ -276,9 +276,12 @@ draw_trans(transaction *t, int line, float total)
 	} else {
 		account *a;
 		split *s = t->splits->data;
+		split *o = t->splits->data;
 
 		if (!strcmp(s->account, curr_acct->id))
 			s = t->splits->next->data;
+		else
+			o = t->splits->next->data;
 
 		a = find_account(s->account, accounts);
 		if (!a)
@@ -287,7 +290,7 @@ draw_trans(transaction *t, int line, float total)
 			mvaddstr(line, 44, a->name);
 
 		mvaddstr(line, 66, "   ");
-		mvaddch(line, 69, s->recstate);
+		mvaddch(line, 69, o->recstate);
 		mvaddstr(line, 70, "   ");
 	}
 
@@ -706,13 +709,6 @@ list_handle_key(int c)
 		curr_acct->selected = 1;
 		redraw_screen();
 		break;
-	case KEY_RESIZE:
-		endwin();
-		initscr();
-		recalc_skip_acct();
-		clear();
-		redraw_screen();
-		break;
 	default:
 		break;
 	}
@@ -757,6 +753,15 @@ display_run()
 	redraw_screen();
 
 	while ((c = getch())) {
+		if (c == KEY_RESIZE) {
+			endwin();
+			initscr();
+			recalc_skip_acct();
+			clear();
+			redraw_screen();
+			continue;
+		}
+
 		switch (display_mode) {
 		case ACCT_LIST:
 			if (list_handle_key(c)) {
