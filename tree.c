@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "tree.h"
 
-static int inserts = 0;
-
 tree *
 tree_new(void *data)
 {
@@ -44,7 +42,6 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 	if (!t) {
 		s = tree_new(data);
 		s->red = 0;
-		inserts++;
 		return s;
 	}
 
@@ -87,10 +84,8 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 	assert(s);
 
 	/* case 2: new node's parent is black */
-	if (!s->parent->red) {
-		inserts++;
+	if (!s->parent->red)
 		return t;
-	}
 
 	/* case 3: uncle is red */
 	child = s;
@@ -104,8 +99,10 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 		else
 			uncle = grandparent->left;
 
-		if (!uncle)
+		if (!uncle) {
+			/* uncle is black! */
 			break;
+		}
 
 		if (uncle->red) {
 			parent->red = 0;
@@ -119,7 +116,6 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 		}
 	}
 	if (!parent || !parent->red) {
-		inserts++;
 		grandparent->red = 0;
 		return t;
 	}
@@ -175,7 +171,6 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 			else
 				parent->parent->right = parent;
 		} else {
-			inserts++;
 			return parent;
 		}
 	} else if (grandparent->right == parent && parent->right == child) {
@@ -197,12 +192,10 @@ tree_insert(tree *t, void *data, tree_cmpfunc func)
 			else
 				parent->parent->right = parent;
 		} else {
-			inserts++;
 			return parent;
 		}
 	}
 
-	inserts++;
 	return t;
 }
 
