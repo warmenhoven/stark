@@ -40,16 +40,15 @@ endif
 
 TARGET = stark
 
+all: depend $(TARGET)
+
 OBJS = display.o file.o gnucash.o list.o main.o tree.o xml.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) $(LDLIBS) -o $@
 
-# yeah, i know, this isn't strictly correct. so shoot me. they're small files.
-$(OBJS): list.h main.h tree.h xml.h
-
 clean:
-	rm -rf $(TARGET) *.bb *.bbg *.da *.gcov *.o core gmon.out $(TARGET).tgz
+	rm -rf $(TARGET) .depend *.bb *.bbg *.da *.gcov *.o core gmon.out $(TARGET).tgz
 
 dist:
 	rm -f $(TARGET).tgz
@@ -63,3 +62,9 @@ test: $(TARGET)
 
 timetest: $(TARGET)
 	STARK_TIME=1 time ./stark gcd
+
+.PHONY: depend
+depend:
+	@gcc -MM *.c >.depend
+
+-include .depend
