@@ -447,6 +447,8 @@ gnucash_parse_book(void *book)
 				bail("I don't understand transaction version %s\n",
 					 xml_get_attrib(book, "version"));
 			gnucash_add_transaction(child);
+		} else if (!strcmp(xml_name(child), "book:slots")) {
+			/* we should probably do something here */
 		} else {
 			bail("I don't understand %s\n", xml_name(child));
 		}
