@@ -712,7 +712,6 @@ init_trans(void)
 		i++;
 	}
 
-	/* the header is three lines long */
 	if (i >= LINES - REG_HDR)
 		skip_trans = i - (LINES - REG_HDR);
 	else
@@ -858,7 +857,6 @@ list_handle_key(int c)
 	case '+':
 		if (curr_acct->subs) {
 			curr_acct->expanded = 1;
-			/* no need to clear since we're now drawing more */
 			redraw_screen();
 		}
 		break;
@@ -878,7 +876,6 @@ list_handle_key(int c)
 			curr_acct->expanded = 0;
 		} else {
 			curr_acct->expanded = 1;
-			/* no need to clear since we're now drawing more */
 		}
 		redraw_screen();
 
