@@ -935,7 +935,7 @@ detail_handle_key(int c)
 		redraw_screen();
 		break;
 
-	case 10:	/* ^J */
+	case 'J':
 		l = curr_trans->splits;
 		while (l) {
 			split *s = l->data;

@@ -48,7 +48,7 @@
    enter, space	- toggle whether the current transaction's splits are listed
 		  explicitly
 
-   ^J		- jump to the account referenced by the current split (for
+   J		- jump to the account referenced by the current split (for
 		  transactions with only two splits, jump to the other account)
 
    j, down	- move to the split or transaction shown below
