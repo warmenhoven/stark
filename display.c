@@ -207,6 +207,38 @@ display_end()
 	endwin();
 }
 
+static void
+expand_all(account *a)
+{
+	list *l = a->subs;
+
+	if (!l)
+		return;
+
+	a->expanded = 1;
+
+	while (l) {
+		expand_all(l->data);
+		l = l->next;
+	}
+}
+
+static void
+close_all(account *a)
+{
+	list *l = a->subs;
+
+	if (!l)
+		return;
+
+	a->expanded = 0;
+
+	while (l) {
+		expand_all(l->data);
+		l = l->next;
+	}
+}
+
 static int
 list_handle_key(int c)
 {
@@ -236,7 +268,8 @@ list_handle_key(int c)
 			account *a = curr_acct;
 			do {
 				a = select_prev_acct(a);
-				skip--;
+				if (!list_find(disp_acct, a))
+					skip--;
 			} while (a != curr_acct->parent);
 			curr_acct->selected = 0;
 			curr_acct = a;
@@ -302,6 +335,24 @@ list_handle_key(int c)
 		if (curr_acct->subs) {
 			curr_acct->expanded = 1;
 			/* no need to clear since we're now drawing more */
+			redraw_screen();
+		}
+		break;
+	case '*':
+		expand_all(curr_acct);
+		redraw_screen();
+		break;
+	case '/':
+		if (curr_acct->subs) {
+			int s = 0;
+			l = disp_acct;
+			while (l->data != curr_acct) {
+				l = l->next;
+				s++;
+			}
+			move(s, 0);
+			clrtobot();
+			close_all(curr_acct);
 			redraw_screen();
 		}
 		break;
