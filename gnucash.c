@@ -4,6 +4,7 @@
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
 #endif
+#include <ansidecl.h>
 #include <expat.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -15,13 +16,15 @@
 
 static XML_Parser parser;
 
+static void *curr = NULL;
+
 list *commodities = NULL;
 list *accounts = NULL;
 char *book_guid = NULL;
 
 static tree *acct_tree = NULL;
 
-static void
+static void ATTRIBUTE_PRINTF_1
 bail(const char *f, ...)
 {
 	va_list ap;
@@ -639,43 +642,40 @@ gnucash_process(void *top)
 }
 
 static void
-gnucash_start(void *data, const char *el, const char **attr)
+gnucash_start(void *data ATTRIBUTE_UNUSED, const char *el, const char **attr)
 {
-	void **curr = (void **)data;
 	int i;
 
-	if (*curr)
-		*curr = xml_child(*curr, el);
+	if (curr)
+		curr = xml_child(curr, el);
 	else
-		*curr = xml_new(el);
+		curr = xml_new(el);
 
 	for (i = 0; attr[i]; i +=2 )
-		xml_attrib(*curr, attr[i], attr[i + 1]);
+		xml_attrib(curr, attr[i], attr[i + 1]);
 }
 
 static void
-gnucash_end(void *data, const char *el)
+gnucash_end(void *data ATTRIBUTE_UNUSED, const char *el)
 {
-	void **curr = (void **)data;
 	void *parent;
 
-	if (!*curr)
+	if (!curr)
 		return;
 
-	if (!(parent = xml_parent(*curr))) {
-		gnucash_process(*curr);
-		xml_free(*curr);
-		*curr = NULL;
-	} else if (!strcmp(xml_name(*curr), el)) {
-		*curr = parent;
+	if (!(parent = xml_parent(curr))) {
+		gnucash_process(curr);
+		xml_free(curr);
+		curr = NULL;
+	} else if (!strcmp(xml_name(curr), el)) {
+		curr = parent;
 	}
 }
 
 static void
-gnucash_chardata(void *data, const char *s, int len)
+gnucash_chardata(void *data ATTRIBUTE_UNUSED, const char *s, int len)
 {
-	void **curr = (void **)data;
-	xml_data(*curr, s, len);
+	xml_data(curr, s, len);
 }
 
 static void
@@ -752,12 +752,10 @@ gnucash_init(char *filename)
 {
 	FILE *f = NULL;
 	char line[4096];
-	void *curr = NULL;
 
 	if (!(parser = XML_ParserCreate(NULL)))
 		bail("Unable to create parser\n");
 
-	XML_SetUserData(parser, &curr);
 	XML_SetElementHandler(parser, gnucash_start, gnucash_end);
 	XML_SetCharacterDataHandler(parser, gnucash_chardata);
 
