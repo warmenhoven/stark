@@ -318,7 +318,7 @@ list_handle_key(int c)
 	case 'q':
 		display_end();
 		return 1;
-	case '+':
+	case '-':
 		if (curr_acct->subs) {
 			int s = 0;
 			l = disp_acct;
@@ -332,12 +332,33 @@ list_handle_key(int c)
 			redraw_screen();
 		}
 		break;
-	case '-':
+	case '+':
 		if (curr_acct->subs) {
 			curr_acct->expanded = 1;
 			/* no need to clear since we're now drawing more */
 			redraw_screen();
 		}
+		break;
+	case ' ':
+		if (!curr_acct->subs)
+			break;
+
+		if (curr_acct->expanded) {
+			int s = 0;
+			l = disp_acct;
+			while (l->data != curr_acct) {
+				l = l->next;
+				s++;
+			}
+			move(s, 0);
+			clrtobot();
+			curr_acct->expanded = 0;
+		} else {
+			curr_acct->expanded = 1;
+			/* no need to clear since we're now drawing more */
+		}
+		redraw_screen();
+
 		break;
 	case '*':
 		expand_all(curr_acct);
