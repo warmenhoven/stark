@@ -321,9 +321,15 @@ gnucash_print_accounts(list *l, char *prefix)
 }
 
 static int
-gnucash_trans_cmp(const void *a, const void *b)
+gnucash_trans_cmp(const void *one, const void *two)
 {
-	return ((transaction *)a)->posted - ((transaction *)b)->posted;
+	const transaction *a = one, *b = two;
+
+	if (a->posted != b->posted)
+		return a->posted - b->posted;
+	if (a->num != b->num)
+		return a->num - b->num;
+	return a->entered - b->entered;
 }
 
 static void
