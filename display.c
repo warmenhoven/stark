@@ -111,7 +111,7 @@ get_value(account *a, value *total)
 	value_add(total, &curr);
 }
 
-static double
+double
 value_to_double(value *v)
 {
 	double ret = v->val;

@@ -13,8 +13,12 @@ usage(char *name)
 int
 main(int argc, char **argv)
 {
-	if (argc != 2)
+	if (argc == 3) {
+		convert(argv[1], argv[2]);
+		return 0;
+	} else if (argc != 2) {
 		usage(argv[0]);
+	}
 
 	gnucash_init(argv[1]);
 

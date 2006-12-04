@@ -17,6 +17,7 @@ static void *curr = NULL;
 
 list *commodities = NULL;
 list *accounts = NULL;
+list *transactions = NULL;
 char *book_guid = NULL;
 
 static tree *acct_tree = NULL;
@@ -475,6 +476,7 @@ gnucash_add_split(transaction *t, void *sp, value *sum)
 			value_add(&a->quantity, &s->quantity);
 		}
 		s->account = strdup(xml_get_data(data));
+		s->acctptr = a;
 	} else {
 		bail("Split without reconciled account?\n");
 	}
@@ -522,6 +524,8 @@ gnucash_add_transaction(void *trans)
 	data = xml_get_child(trans, "trn:description");
 	if (data && xml_get_data(data))
 		t->description = strdup(xml_get_data(data));
+
+	transactions = list_append(transactions, t);
 
 	data = xml_get_child(trans, "trn:splits");
 	if (data) {

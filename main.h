@@ -67,6 +67,9 @@ typedef struct _acct {
 	/* display */
 	int				expanded;
 	int				selected;
+
+	/* conversion */
+	int				sqlid;
 } account;
 
 typedef struct {
@@ -81,9 +84,13 @@ typedef struct {
 	char			*action;
 	unsigned char	recstate;
 	char			pad[3];
+	account			*acctptr;
 
 	/* display */
 	int				selected;
+
+	/* conversion */
+	int				sqlid;
 } split;
 
 typedef struct {
@@ -100,9 +107,13 @@ typedef struct {
 	/* display */
 	int		expanded;
 	int		selected;
+
+	/* conversion */
+	int		sqlid;
 } transaction;
 
 extern list *commodities;
+extern list *transactions;
 extern list *accounts;
 extern char *book_guid;
 
@@ -110,6 +121,7 @@ extern account *find_account(char *);
 
 extern void value_add(value *, value *);
 extern void value_multiply(value *, value *, value *);
+extern double value_to_double(value *);
 
 extern void gnucash_init(char *);
 extern void free_all(void);
