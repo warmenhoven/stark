@@ -11,15 +11,15 @@ sql_acct_list(list *accts)
 		char query[16 * 1024];
 
 		snprintf(query, sizeof (query),
-			 "insert into accounts "
-			 "(name, class, tax, def_commodity, reconcile_date) "
-			 "values "
-			 "('%s', '%d', '%d', '%s', '%lu')",
-			 a->name,
-			 a->type,
-			 a->tax_related,
-			 a->commodity ? a->commodity->id : "USD",
-			 a->last_reconcile);
+				 "insert into accounts "
+				 "(name, class, tax, def_commodity, reconcile_date) "
+				 "values "
+				 "('%s', '%d', '%d', '%s', '%lu')",
+				 a->name,
+				 a->type,
+				 a->tax_related,
+				 a->commodity ? a->commodity->id : "USD",
+				 a->last_reconcile);
 
 		sqlite_exec(sqldb, query, NULL, NULL, NULL);
 		a->sqlid = sqlite_last_insert_rowid(sqldb);
@@ -27,31 +27,31 @@ sql_acct_list(list *accts)
 
 		if (a->parent && a->parent->sqlid) {
 			snprintf(query, sizeof (query),
-				 "update accounts "
-				 "set parent = '%d' "
-				 "where id = '%d'",
-				 a->parent->sqlid,
-				 a->sqlid);
+					 "update accounts "
+					 "set parent = '%d' "
+					 "where id = '%d'",
+					 a->parent->sqlid,
+					 a->sqlid);
 			sqlite_exec(sqldb, query, NULL, NULL, NULL);
 		}
 
 		if (a->description) {
 			snprintf(query, sizeof (query),
-				 "update accounts "
-				 "set description = '%s' "
-				 "where id = '%d'",
-				 a->description,
-				 a->sqlid);
+					 "update accounts "
+					 "set description = '%s' "
+					 "where id = '%d'",
+					 a->description,
+					 a->sqlid);
 			sqlite_exec(sqldb, query, NULL, NULL, NULL);
 		}
 
 		if (a->notes) {
 			snprintf(query, sizeof (query),
-				 "update accounts "
-				 "set notes = '%s' "
-				 "where id = '%d'",
-				 a->notes,
-				 a->sqlid);
+					 "update accounts "
+					 "set notes = '%s' "
+					 "where id = '%d'",
+					 a->notes,
+					 a->sqlid);
 			sqlite_exec(sqldb, query, NULL, NULL, NULL);
 		}
 
@@ -69,12 +69,12 @@ sql_trans_list(list *xacts)
 		int scount = 0;
 
 		snprintf(query, sizeof (query),
-			 "insert into transactions "
-			 "(description, post_date) "
-			 "values "
-			 "('%s', '%d')",
-			 t->description,
-			 t->posted);
+				 "insert into transactions "
+				 "(description, post_date) "
+				 "values "
+				 "('%s', '%d')",
+				 t->description,
+				 t->posted);
 		sqlite_exec(sqldb, query, NULL, NULL, NULL);
 		t->sqlid = sqlite_last_insert_rowid(sqldb);
 
@@ -82,25 +82,25 @@ sql_trans_list(list *xacts)
 			split *s = splits->data;
 
 			snprintf(query, sizeof (query),
-				 "insert into splits "
-				 "(account, trans, commodity, quantity, reconciled) "
-				 "values "
-				 "('%d', '%d', '%s', '%.05f', '%d')",
-				 s->acctptr->sqlid,
-				 t->sqlid,
-				 s->acctptr->commodity ? s->acctptr->commodity->id : "USD",
-				 value_to_double(&s->quantity),
-				 s->recstate ? 1 : 0);
+					 "insert into splits "
+					 "(account, trans, commodity, quantity, reconciled) "
+					 "values "
+					 "('%d', '%d', '%s', '%.05f', '%d')",
+					 s->acctptr->sqlid,
+					 t->sqlid,
+					 s->acctptr->commodity ? s->acctptr->commodity->id : "USD",
+					 value_to_double(&s->quantity),
+					 s->recstate ? 1 : 0);
 			sqlite_exec(sqldb, query, NULL, NULL, NULL);
 			s->sqlid = sqlite_last_insert_rowid(sqldb);
 
 			if (s->memo) {
 				snprintf(query, sizeof (query),
-					 "update accounts "
-					 "set memo = '%s' "
-					 "where id = '%d'",
-					 s->memo,
-					 s->sqlid);
+						 "update accounts "
+						 "set memo = '%s' "
+						 "where id = '%d'",
+						 s->memo,
+						 s->sqlid);
 				sqlite_exec(sqldb, query, NULL, NULL, NULL);
 			}
 			scount++;
@@ -121,3 +121,5 @@ convert(char *gnucash_file, char *sqlite_file)
 
 	return 0;
 }
+
+/* vim:set ts=4 sw=4 noet ai tw=80: */
