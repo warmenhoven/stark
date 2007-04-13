@@ -1,7 +1,7 @@
 ## VARIABLES
 
 #CC = gcc
-LDLIBS = -lcurses -lexpat -lsqlite
+LDLIBS = -lcurses -lexpat -lsqlite3
 
 INSTALL = install -c
 STRIP = strip
